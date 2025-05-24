@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/admin';
@@ -11,13 +11,26 @@ export default function AdminDashboard() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordMessage, setPasswordMessage] = useState({ type: '', text: '' });
   const router = useRouter();
 
   // بيانات اعتماد المسؤول (في الإنتاج، يجب تخزين هذه البيانات بشكل آمن وعدم تضمينها في الكود)
   const adminCredentials = {
     username: 'admin',
-    password: 'admin123'
+    password: 'mera33333'
   };
+
+  // التحقق من تسجيل الدخول المحفوظ
+  useEffect(() => {
+    const isAdminLoggedIn = localStorage.getItem('adminLoggedIn') === 'true';
+    if (isAdminLoggedIn) {
+      setIsLoggedIn(true);
+    }
+  }, []);
 
   // التحقق من تسجيل الدخول
   const handleLogin = (e: React.FormEvent) => {
@@ -26,10 +39,136 @@ export default function AdminDashboard() {
     if (username === adminCredentials.username && password === adminCredentials.password) {
       setIsLoggedIn(true);
       setLoginError('');
-      // في التطبيق الحقيقي، يمكننا تخزين حالة تسجيل الدخول في الـ localStorage أو استخدام نظام مصادقة مناسب
+      // حفظ حالة تسجيل الدخول في localStorage
+      localStorage.setItem('adminLoggedIn', 'true');
     } else {
       setLoginError('اسم المستخدم أو كلمة المرور غير صحيحة');
     }
+  };
+
+  // تسجيل الخروج
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    localStorage.removeItem('adminLoggedIn');
+  };
+
+  // تغيير كلمة المرور
+  const handleChangePassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // التحقق من كلمة المرور الحالية
+    if (currentPassword !== adminCredentials.password) {
+      setPasswordMessage({ type: 'error', text: 'كلمة المرور الحالية غير صحيحة' });
+      return;
+    }
+    
+    // التحقق من تطابق كلمتي المرور الجديدتين
+    if (newPassword !== confirmPassword) {
+      setPasswordMessage({ type: 'error', text: 'كلمة المرور الجديدة وتأكيدها غير متطابقين' });
+      return;
+    }
+    
+    // التحقق من قوة كلمة المرور الجديدة
+    if (newPassword.length < 8) {
+      setPasswordMessage({ type: 'error', text: 'كلمة المرور الجديدة يجب أن تكون على الأقل 8 أحرف' });
+      return;
+    }
+    
+    // هنا يمكن إضافة المزيد من التحققات من قوة كلمة المرور
+    
+    // في التطبيق الحقيقي، هنا سنقوم بتحديث كلمة المرور في قاعدة البيانات
+    // لكن في هذه الحالة المبسطة، سنقوم بتنبيه المستخدم فقط
+    
+    setPasswordMessage({ 
+      type: 'success', 
+      text: 'تم تغيير كلمة المرور بنجاح! في الإصدار التالي، سيتم حفظ التغييرات في قاعدة البيانات.' 
+    });
+    
+    // إعادة تعيين النموذج
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    
+    // إغلاق نموذج تغيير كلمة المرور بعد 2 ثانية
+    setTimeout(() => {
+      setShowChangePassword(false);
+      setPasswordMessage({ type: '', text: '' });
+    }, 2000);
+  };
+
+  // نموذج تغيير كلمة المرور
+  const renderChangePasswordForm = () => {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold text-gray-800">تغيير كلمة المرور</h2>
+            <button 
+              onClick={() => {
+                setShowChangePassword(false);
+                setPasswordMessage({ type: '', text: '' });
+              }}
+              className="text-gray-400 hover:text-gray-500"
+            >
+              ✕
+            </button>
+          </div>
+          
+          {passwordMessage.text && (
+            <div className={`mb-4 p-3 rounded-md ${
+              passwordMessage.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+            }`}>
+              {passwordMessage.text}
+            </div>
+          )}
+          
+          <form onSubmit={handleChangePassword}>
+            <div className="mb-4">
+              <label htmlFor="currentPassword" className="block mb-2 text-gray-700">كلمة المرور الحالية</label>
+              <input
+                type="password"
+                id="currentPassword"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-600 focus:border-transparent"
+                required
+              />
+            </div>
+            
+            <div className="mb-4">
+              <label htmlFor="newPassword" className="block mb-2 text-gray-700">كلمة المرور الجديدة</label>
+              <input
+                type="password"
+                id="newPassword"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-600 focus:border-transparent"
+                required
+              />
+            </div>
+            
+            <div className="mb-6">
+              <label htmlFor="confirmPassword" className="block mb-2 text-gray-700">تأكيد كلمة المرور الجديدة</label>
+              <input
+                type="password"
+                id="confirmPassword"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-600 focus:border-transparent"
+                required
+              />
+            </div>
+            
+            <button
+              type="submit"
+              className="w-full bg-amber-600 text-white py-3 rounded-lg font-medium hover:bg-amber-700 transition-colors"
+            >
+              تغيير كلمة المرور
+            </button>
+          </form>
+        </div>
+      </div>
+    );
   };
 
   // نموذج تسجيل الدخول
@@ -98,7 +237,13 @@ export default function AdminDashboard() {
               <div className="flex items-center">
                 <span className="ml-4 text-gray-700">مرحباً، المسؤول</span>
                 <button 
-                  onClick={() => setIsLoggedIn(false)}
+                  onClick={() => setShowChangePassword(true)}
+                  className="ml-4 text-blue-600 hover:text-blue-700"
+                >
+                  تغيير كلمة المرور
+                </button>
+                <button 
+                  onClick={handleLogout}
                   className="ml-4 text-gray-500 hover:text-amber-600"
                 >
                   تسجيل الخروج
@@ -232,6 +377,9 @@ export default function AdminDashboard() {
             </div>
           </main>
         </div>
+        
+        {/* نموذج تغيير كلمة المرور */}
+        {showChangePassword && renderChangePasswordForm()}
       </div>
     );
   };
