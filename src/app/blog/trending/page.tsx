@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -47,7 +47,8 @@ interface BlogPostItem {
   isFeatured?: boolean;
 }
 
-export default function TrendingPage() {
+// مكون المحتوى الرئيسي
+function TrendingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const typeParam = searchParams.get('type') || TrendingType.POPULAR;
@@ -254,5 +255,14 @@ export default function TrendingPage() {
         )}
       </div>
     </main>
+  );
+}
+
+// مكون الصفحة الرئيسي
+export default function TrendingPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto p-8 text-center">جاري التحميل...</div>}>
+      <TrendingContent />
+    </Suspense>
   );
 }
