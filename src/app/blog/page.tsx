@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -62,7 +62,8 @@ interface PaginationInfo {
   totalPages: number;
 }
 
-export default function BlogPage() {
+// مكون المحتوى الرئيسي
+function BlogContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get('category');
@@ -505,5 +506,14 @@ export default function BlogPage() {
         }
       `}</style>
     </div>
+  );
+}
+
+// مكون الصفحة الرئيسي
+export default function BlogPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto p-8 text-center">جاري التحميل...</div>}>
+      <BlogContent />
+    </Suspense>
   );
 }
