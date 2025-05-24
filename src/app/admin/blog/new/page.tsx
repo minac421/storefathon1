@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { BlogCategory } from '@/types/blog';
@@ -97,7 +97,8 @@ const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: 
   );
 };
 
-export default function BlogPostPage() {
+// مكون البلوج بوست داخلي مع استخدام useSearchParams
+function BlogPostContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isEditMode = searchParams.get('edit') === 'true';
@@ -431,5 +432,14 @@ export default function BlogPostPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+// مكون الصفحة الرئيسي
+export default function BlogPostPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto p-8 text-center">جاري التحميل...</div>}>
+      <BlogPostContent />
+    </Suspense>
   );
 }
