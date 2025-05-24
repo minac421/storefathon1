@@ -1,0 +1,3 @@
+{
+  "/api/socket/fallback/route": "app/api/socket/fallback/route.js"
+}

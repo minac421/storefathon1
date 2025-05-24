@@ -1,0 +1,28 @@
+{
+  "..\\node_modules\\next\\dist\\client\\index.js -> ../pages/_app": {
+    "id": 472,
+    "files": [
+      "static/chunks/472.a3826d29d6854395.js"
+    ]
+  },
+  "..\\node_modules\\next\\dist\\client\\index.js -> ../pages/_error": {
+    "id": 9341,
+    "files": [
+      "static/chunks/9341.3de5922501c09e3c.js"
+    ]
+  },
+  "components\\ClientChatWindow.tsx -> @/components/chat/ChatWindow.jsx": {
+    "id": 8308,
+    "files": [
+      "static/chunks/3149.1667481eb9c4feb8.js",
+      "static/chunks/8308.126f0b4eec453b4c.js"
+    ]
+  },
+  "components\\chat\\ChatSection.jsx -> @/components/chat/ChatWindow": {
+    "id": 8308,
+    "files": [
+      "static/chunks/3149.1667481eb9c4feb8.js",
+      "static/chunks/8308.126f0b4eec453b4c.js"
+    ]
+  }
+}

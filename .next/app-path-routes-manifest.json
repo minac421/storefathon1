@@ -1,0 +1,7 @@
+{
+  "/[locale]/page": "/[locale]",
+  "/api/chat/messages/route": "/api/chat/messages",
+  "/api/socket/route": "/api/socket",
+  "/api/user/settings/route": "/api/user/settings",
+  "/page": "/"
+}

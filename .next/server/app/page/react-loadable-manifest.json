@@ -1,0 +1,10 @@
+{
+  "[project]/src/components/chat/ChatWindow.jsx [app-client] (ecmascript, next/dynamic entry)": {
+    "id": "[project]/src/components/chat/ChatWindow.jsx [app-client] (ecmascript, next/dynamic entry)",
+    "files": [
+      "static/chunks/src_13cf0a41._.js",
+      "static/chunks/node_modules_50db5a07._.js",
+      "static/chunks/src_components_chat_ChatWindow_jsx_f6f98b9a._.js"
+    ]
+  }
+}

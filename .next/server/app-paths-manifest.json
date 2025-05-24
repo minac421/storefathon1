@@ -1,0 +1,15 @@
+{
+  "/[locale]/page": "app/[locale]/page.js",
+  "/admin/page": "app/admin/page.js",
+  "/admin/services/page": "app/admin/services/page.js",
+  "/api/blog/route": "app/api/blog/route.js",
+  "/api/chat/messages/like/route": "app/api/chat/messages/like/route.js",
+  "/api/chat/messages/route": "app/api/chat/messages/route.js",
+  "/api/services/route": "app/api/services/route.js",
+  "/api/socket/route": "app/api/socket/route.js",
+  "/api/user/settings/route": "app/api/user/settings/route.js",
+  "/blog/page": "app/blog/page.js",
+  "/blog/profile/page": "app/blog/profile/page.js",
+  "/page": "app/page.js",
+  "/services/page": "app/services/page.js"
+}
