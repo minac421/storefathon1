@@ -92,7 +92,7 @@ export default function ChatWindow({ locale }) {
         try {
           setIsLoading(true);
           
-          const response = await fetch('/api/socket');
+          const response = await fetch('/api/chat/messages');
           
           if (!response.ok) {
             throw new Error(`HTTP error ${response.status}`);
@@ -122,7 +122,7 @@ export default function ChatWindow({ locale }) {
       // إرسال رسالة
       async function sendMessage(messageData) {
         try {
-          const response = await fetch('/api/socket', {
+          const response = await fetch('/api/chat/messages', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -175,7 +175,7 @@ export default function ChatWindow({ locale }) {
         // استطلاع كل 5 ثوانٍ
         pollInterval = setInterval(async () => {
           try {
-            const response = await fetch('/api/socket');
+            const response = await fetch('/api/chat/messages');
             
             if (!response.ok) {
               throw new Error(`HTTP error ${response.status}`);
@@ -188,10 +188,10 @@ export default function ChatWindow({ locale }) {
               const newMessages = data.messages || [];
               
               setMessages(prevMessages => {
-                // تجميع معرفات الرسائل الحالية
+                // تجميع معرفات الرسائل الحالية في مجموعة للبحث السريع
                 const existingIds = new Set(prevMessages.map(msg => msg.id));
                 
-                // فلترة الرسائل الجديدة فقط
+                // فلترة الرسائل الجديدة فقط (التي ليس لها معرف موجود بالفعل)
                 const newUniqueMessages = newMessages.filter(msg => !existingIds.has(msg.id));
                 
                 // إذا لم تكن هناك رسائل جديدة، لا تقم بتحديث الحالة
@@ -199,8 +199,14 @@ export default function ChatWindow({ locale }) {
                   return prevMessages;
                 }
                 
-                // إضافة الرسائل الجديدة
-                return [...prevMessages, ...newUniqueMessages];
+                // استبدال الرسائل المحلية بنظائرها من الخادم
+                const updatedMessages = prevMessages.filter(msg => !msg.id.startsWith('local-'));
+                
+                // دمج الرسائل الموجودة مع الرسائل الجديدة وترتيبها حسب الوقت
+                const mergedMessages = [...updatedMessages, ...newUniqueMessages]
+                  .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                
+                return mergedMessages;
               });
               
               // تحديث قائمة المستخدمين المتصلين
@@ -235,7 +241,30 @@ export default function ChatWindow({ locale }) {
         // أولا، نحاول الحصول على الإعدادات من localStorage
         const localSettings = getUserSettings();
         if (localSettings) {
-          setUserProfile(localSettings);
+          // إنشاء معرف فريد للمستخدم إذا لم يكن موجوداً
+          const userId = localSettings.userId || `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          const updatedSettings = {
+            ...localSettings,
+            userId
+          };
+          setUserProfile(updatedSettings);
+          
+          // تسجيل المستخدم في نظام الشات
+          try {
+            const response = await fetch('/api/chat/register', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(updatedSettings),
+            });
+            
+            if (!response.ok) {
+              throw new Error('فشل في تسجيل المستخدم في الشات');
+            }
+          } catch (error) {
+            console.error('Error registering user in chat:', error);
+          }
         }
         
         // ثم نحاول الحصول على الإعدادات من API
@@ -243,7 +272,12 @@ export default function ChatWindow({ locale }) {
         if (response.ok) {
           const data = await response.json();
           if (data.success && data.settings) {
-            setUserProfile(data.settings);
+            const userId = data.settings.userId || `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            const updatedSettings = {
+              ...data.settings,
+              userId
+            };
+            setUserProfile(updatedSettings);
           }
         }
       } catch (error) {
@@ -257,26 +291,89 @@ export default function ChatWindow({ locale }) {
   // التمرير التلقائي لأسفل عند إضافة رسائل جديدة
   useEffect(() => {
     // التمرير فقط داخل منطقة الرسائل
-    const messagesContainer = messagesEndRef.current?.parentElement;
-    if (messagesContainer && messagesEndRef.current) {
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
+    const scrollToBottom = () => {
+      const messagesContainer = messagesEndRef.current?.parentElement;
+      if (messagesContainer && messagesEndRef.current) {
+        try {
+          // استخدام سلوك smooth للتمرير على الأجهزة التي تدعمه
+          messagesContainer.scrollTo({
+            top: messagesContainer.scrollHeight,
+            behavior: 'smooth'
+          });
+        } catch (error) {
+          // التمرير العادي كخيار احتياطي
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+      }
+    };
+    
+    // تأخير قصير للتأكد من استقرار الواجهة قبل التمرير
+    const timeoutId = setTimeout(scrollToBottom, 100);
+    
+    return () => clearTimeout(timeoutId);
   }, [messages]);
+  
+  // معالجة التغيير في حجم النافذة لضمان تجربة مستخدم ثابتة
+  useEffect(() => {
+    const handleResize = () => {
+      // إعادة ضبط التمرير عند تغيير حجم النافذة
+      const messagesContainer = messagesEndRef.current?.parentElement;
+      if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+    };
+    
+    // إضافة مستمع لحدث تغيير الحجم
+    window.addEventListener('resize', handleResize);
+    
+    // تنظيف المستمع عند إلغاء تحميل المكون
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
   
   // الحصول على صورة المستخدم من معرف الأفاتار
   const getAvatarSrc = (avatarId) => {
-    // ضمان أن avatarId عدد
-    const numericId = Number(avatarId) || 1;
-    // البحث عن الأفاتار بالمعرف الصحيح
-    const avatar = AVAILABLE_AVATARS.find(a => a.id === numericId);
+    try {
+      // ضمان أن avatarId عدد
+      const numericId = parseInt(avatarId) || 1;
+      
+      // البحث عن الأفاتار بالمعرف الصحيح
+      const avatar = AVAILABLE_AVATARS.find(a => a.id === numericId);
+      
+      if (avatar) {
+        return avatar.src;
+      }
+      
+      // إذا لم يتم العثور على الصورة، استخدم الصورة الافتراضية
+      console.warn('Avatar not found for ID:', numericId);
+      return '/images/avatars/hero_icon_8_wake.png'; // صورة افتراضية
+    } catch (error) {
+      console.error('Error getting avatar src:', error);
+      return '/images/avatars/hero_icon_8_wake.png'; // صورة افتراضية في حالة الخطأ
+    }
+  };
+  
+  // الحصول على معلومات المستخدم من الرسالة
+  const getUserInfoFromMessage = (msg) => {
+    // البحث عن المستخدم في قائمة المستخدمين النشطين
+    const activeUser = onlineUsers.find(user => 
+      user.userId === msg.userId || user.nickname === msg.sender
+    );
     
-    if (avatar) {
-      return avatar.src;
+    // استخدام بيانات المستخدم النشط إذا وجد
+    if (activeUser) {
+      return {
+        avatarId: activeUser.avatarId || msg.senderAvatarId || 1,
+        isOnline: true
+      };
     }
     
-    // إذا لم يتم العثور على الصورة، استخدم الصورة الافتراضية
-    console.log('لم يتم العثور على الأفاتار بالمعرف:', numericId);
-    return '/images/avatars/hero_icon_8_wake.png'; // صورة افتراضية
+    // استخدام بيانات الرسالة مباشرة
+    return {
+      avatarId: msg.senderAvatarId || 1,
+      isOnline: false
+    };
   };
   
   // إرسال حالة الكتابة للمستخدمين الآخرين
@@ -298,7 +395,7 @@ export default function ChatWindow({ locale }) {
     
     if (message.trim()) {
       // التحقق من وجود ملف شخصي للمستخدم
-      if (!userProfile.nickname) {
+      if (!userProfile.nickname || !userProfile.userId) {
         // توجيه المستخدم لإنشاء ملف شخصي
         alert('يجب إنشاء ملف شخصي قبل إرسال رسائل. سيتم توجيهك إلى صفحة الملف الشخصي.');
         window.location.href = '/blog/profile';
@@ -311,31 +408,40 @@ export default function ChatWindow({ locale }) {
         socket.emit('user-typing', {
           room: 'global',
           username: userProfile.nickname,
+          userId: userProfile.userId,
           isTyping: false
         });
       }
       
+      // تخزين الرسالة قبل مسح مربع الإدخال
+      const currentMessage = message.trim();
+      setMessage(''); // مسح مربع الإدخال فوراً لتحسين تجربة المستخدم
+      
       try {
         const messageData = {
-          message: message.trim(),
+          message: currentMessage,
           sender: userProfile.nickname,
+          userId: userProfile.userId,
           senderAvatarId: userProfile.avatarId
         };
         
+        // إنشاء معرف فريد للرسالة المحلية
+        const localId = `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        
         // إنشاء رسالة محلية للعرض الفوري
         const localMessage = {
-          id: `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          id: localId,
           ...messageData,
           timestamp: new Date().toISOString(),
           interaction: {
             likes: [],
             isLiked: false
-          }
+          },
+          pending: true // علامة لتمييز الرسائل قيد الإرسال
         };
         
         // إضافة الرسالة محليًا فوراً للتجربة المستخدم الأفضل
         setMessages(prev => [...prev, localMessage]);
-        setMessage('');
         
         try {
           // محاولة إرسال الرسالة إلى API
@@ -347,29 +453,48 @@ export default function ChatWindow({ locale }) {
             body: JSON.stringify(messageData),
           });
           
-          if (response.ok) {
-            const data = await response.json();
-            
-            if (data.success) {
-              // إرسال الرسالة عبر socket.io لكل المتصلين
-              if (socket) {
-                socket.emit('send-message', {
-                  room: 'global',
-                  ...messageData
-                });
-              }
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'فشل في إرسال الرسالة');
+          }
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            // إرسال الرسالة عبر socket.io لكل المتصلين
+            if (socket) {
+              socket.emit('send-message', {
+                room: 'global',
+                ...messageData
+              });
             }
+            
+            // تحديث الرسالة المحلية بالمعرف الجديد وإزالة علامة pending
+            setMessages(prev => 
+              prev.map(msg => 
+                msg.id === localId ? { ...data.message, pending: false } : msg
+              )
+            );
+          } else {
+            throw new Error(data.error || 'فشل في إرسال الرسالة');
           }
         } catch (apiError) {
-          console.warn('تعذر إرسال الرسالة إلى API:', apiError);
-          // لا نحتاج إلى القيام بأي شيء هنا لأن الرسالة تم إضافتها بالفعل في واجهة المستخدم
+          console.error('Error sending message to API:', apiError);
+          
+          // تحديث الرسالة المحلية لإظهار الخطأ
+          setMessages(prev => 
+            prev.map(msg => 
+              msg.id === localId ? { ...msg, pending: false, error: true, errorMessage: apiError.message } : msg
+            )
+          );
+          
+          // إظهار رسالة خطأ صغيرة تحت الرسالة بدلاً من تنبيه
+          console.error(`فشل في إرسال الرسالة: ${apiError.message}`);
         }
-        
-        // إزالة الردود التلقائية بناءً على طلب المستخدم
-        
       } catch (error) {
-        console.error('Error sending message:', error);
-        alert(`فشل في إرسال الرسالة: ${error.message}`);
+        console.error('Error in handleSend:', error);
+        // إظهار رسالة خطأ فقط في حالة فشل العملية بالكامل
+        alert(`حدث خطأ: ${error.message}`);
       }
     }
   };
@@ -643,13 +768,18 @@ export default function ChatWindow({ locale }) {
                       <div className="flex items-start gap-1 sm:gap-2">
                           {!isCurrentUser && (
                             <div className="flex-shrink-0">
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-blue-500/40 overflow-hidden shadow-md">
+                            <div className="relative">
+                              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-blue-500/40 overflow-hidden shadow-md">
                                 <img 
-                                  src={getAvatarSrc(msg.senderAvatarId)} 
+                                  src={getAvatarSrc(getUserInfoFromMessage(msg).avatarId)} 
                                   alt={msg.sender} 
                                   className="w-full h-full object-cover"
                                 />
                               </div>
+                              {getUserInfoFromMessage(msg).isOnline && (
+                                <div className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-400 border border-blue-900"></div>
+                              )}
+                            </div>
                             </div>
                           )}
                           <div className={`${isCurrentUser ? 'order-1' : 'order-2'}`}>
@@ -661,9 +791,26 @@ export default function ChatWindow({ locale }) {
                             className={`rounded-lg p-2 sm:p-3 shadow-lg ${isCurrentUser 
                                 ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-tr-none' 
                                 : 'bg-gradient-to-r from-gray-800 to-gray-700 text-gray-100 rounded-tl-none'
-                              }`}
+                              } ${msg.error ? 'border border-red-500' : ''} ${msg.pending ? 'opacity-70' : ''}`}
                             >
                             <p className="whitespace-pre-wrap break-words text-sm sm:text-base">{msg.message}</p>
+                            {msg.error && (
+                              <p className="text-xs text-red-300 mt-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3 inline-block mr-1">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
+                                </svg>
+                                {msg.errorMessage || 'فشل في الإرسال'}
+                              </p>
+                            )}
+                            {msg.pending && (
+                              <p className="text-xs text-blue-300 mt-1 flex items-center">
+                                <svg className="animate-spin h-3 w-3 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                جاري الإرسال...
+                              </p>
+                            )}
                             <div className="flex items-center justify-end mt-1.5 text-xs">
                               <button 
                                 className="flex items-center gap-1 opacity-80 hover:opacity-100 transition-opacity"
@@ -687,7 +834,7 @@ export default function ChatWindow({ locale }) {
                             <div className="flex-shrink-0">
                             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-blue-500/40 overflow-hidden shadow-md">
                                 <img 
-                                  src={getAvatarSrc(msg.senderAvatarId)} 
+                                  src={getAvatarSrc(getUserInfoFromMessage(msg).avatarId)} 
                                   alt={msg.sender} 
                                   className="w-full h-full object-cover"
                                 />
@@ -708,7 +855,7 @@ export default function ChatWindow({ locale }) {
                 <div className="mb-2 p-2 rounded-lg bg-red-900/30 border border-red-700/50 text-xs text-red-200">
                   <div className="flex items-center mb-1">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 mr-1 text-red-400">
-                      <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-1.72 6.97a.75.75 0 10-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 101.06 1.06L12 13.06l1.72 1.72a.75.75 0 101.06-1.06L13.06 12l1.72-1.72a.75.75 0 10-1.06-1.06L12 10.94l-1.72-1.72z" clipRule="evenodd" />
+                      <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.48 10 10 10 10-4.48 10-10S17.385 2.25 12 2.25zm-1.72 6.97a.75.75 0 10-1.06 1.06L10.94 10l-1.72 1.72a.75.75 0 101.06 1.06L12 11.06l1.72 1.72a.75.75 0 101.06-1.06L13.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L12 8.94 8.28 7.22z" clipRule="evenodd" />
                     </svg>
                     <span>يوجد مشكلة في الاتصال</span>
                   </div>

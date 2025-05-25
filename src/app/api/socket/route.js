@@ -6,34 +6,19 @@ import { chatStore } from '@/utils/chatStore';
 
 export async function GET(request) {
   try {
-    // قراءة آخر الرسائل - افتراضياً 20 رسالة
     const messages = chatStore.getMessages(20);
-    
-    // إنشاء قائمة المستخدمين المتصلين من الرسائل الفعلية فقط
-    const users = Array.from(new Set(messages.map(msg => msg.sender)))
-      .filter(username => username) // تأكد من أن اسم المستخدم موجود
-      .map(username => {
-        const matchingMsg = messages.find(msg => msg.sender === username);
-        return {
-          name: username,
-          avatarId: matchingMsg?.senderAvatarId || 1,
-          status: 'online'
-        };
-      });
+    const activeUsers = chatStore.getActiveUsers();
     
     return NextResponse.json({
       success: true,
       messages,
-      users,
-      mode: 'api',
-      timestamp: new Date().toISOString()
+      users: activeUsers
     });
   } catch (error) {
-    console.error('Error fetching chat messages:', error);
-    return NextResponse.json({ 
-      success: false, 
-      error: 'فشل في جلب بيانات الدردشة',
-      mode: 'error'
+    console.error('Error fetching chat data from socket endpoint:', error);
+    return NextResponse.json({
+      success: false,
+      error: 'فشل في جلب بيانات الدردشة'
     }, { status: 500 });
   }
 }
@@ -42,19 +27,38 @@ export async function POST(request) {
   try {
     const body = await request.json();
     
-    // التحقق من وجود البيانات المطلوبة
-    if (!body.message || !body.sender) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'بيانات غير مكتملة',
-        mode: 'error'
+    // التحقق من البيانات المدخلة
+    if (!body.message || !body.sender || !body.userId) {
+      return NextResponse.json({
+        success: false,
+        error: 'بيانات غير مكتملة - يرجى التأكد من إدخال الرسالة واسم المرسل ومعرف المستخدم'
       }, { status: 400 });
     }
     
-    // إضافة رسالة جديدة عبر المخزن المشترك
+    // التحقق من أن المستخدم نشط
+    let user = chatStore.activeUsers.get(body.userId);
+    if (!user) {
+      // محاولة إعادة تسجيل المستخدم تلقائياً
+      try {
+        chatStore.addUser({
+          userId: body.userId,
+          nickname: body.sender,
+          avatarId: body.senderAvatarId || 1,
+          status: 'online'
+        });
+        
+        user = chatStore.activeUsers.get(body.userId);
+      } catch (error) {
+        console.error('Error re-registering user:', error);
+      }
+    }
+    
+    // إنشاء رسالة جديدة
     const newMessage = {
+      id: Date.now().toString(),
       message: body.message,
       sender: body.sender,
+      userId: body.userId,
       senderAvatarId: body.senderAvatarId || 1,
       timestamp: new Date().toISOString(),
       interaction: {
@@ -63,19 +67,51 @@ export async function POST(request) {
       }
     };
     
-    const savedMessage = chatStore.addMessage(newMessage);
-    
-    return NextResponse.json({
-      success: true,
-      message: savedMessage,
-      mode: 'api'
-    });
+    try {
+      // إضافة الرسالة إلى المخزن المشترك
+      const addedMessage = chatStore.addMessage(newMessage);
+      
+      return NextResponse.json({
+        success: true,
+        message: addedMessage
+      });
+    } catch (error) {
+      console.error('Error adding message to chat store:', error);
+      
+      // إذا كان المستخدم غير نشط، نقوم بإضافة الرسالة مباشرة
+      if (error.message === 'المستخدم غير نشط') {
+        // إضافة الرسالة مباشرة بدون التحقق من المستخدم
+        const savedMessage = {
+          id: `server-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          userId: body.userId,
+          ...newMessage,
+          timestamp: newMessage.timestamp,
+          interaction: newMessage.interaction
+        };
+        
+        chatStore.messages.push(savedMessage);
+        
+        // التحقق من عدم تجاوز الحد الأقصى
+        if (chatStore.messages.length > chatStore.maxMessages) {
+          chatStore.messages.shift();
+        }
+        
+        return NextResponse.json({
+          success: true,
+          message: savedMessage
+        });
+      }
+      
+      return NextResponse.json({
+        success: false,
+        error: 'فشل في إضافة الرسالة إلى المخزن'
+      }, { status: 500 });
+    }
   } catch (error) {
-    console.error('Error adding message:', error);
-    return NextResponse.json({ 
-      success: false, 
-      error: 'فشل في إضافة الرسالة',
-      mode: 'error'
+    console.error('Error processing chat message:', error);
+    return NextResponse.json({
+      success: false,
+      error: error.message || 'فشل في معالجة الرسالة'
     }, { status: 500 });
   }
 } 
