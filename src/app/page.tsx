@@ -103,6 +103,12 @@ export default function Home() {
               >
                 استعرض القلاع
               </Link>
+              <Link 
+                href={`/blog`} 
+                className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-lg text-lg font-bold transition-all hover:scale-105 shadow-lg"
+              >
+                شارك بطولاتك
+              </Link>
             </div>
           </div>
         </div>

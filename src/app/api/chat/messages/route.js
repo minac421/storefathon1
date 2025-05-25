@@ -1,10 +1,26 @@
 import { NextResponse } from 'next/server';
 import { chatStore } from '@/utils/chatStore';
+import dbConnect from '@/lib/dbConnect';
+import ChatMessage from '@/models/ChatMessage';
 
 // الحصول على الرسائل
 export async function GET(request) {
   try {
-    const messages = chatStore.getMessages(20);
+    // الاتصال بقاعدة البيانات
+    await dbConnect();
+    
+    // جلب آخر 50 رسالة مرتبة حسب الوقت (من الأقدم للأحدث)
+    const dbMessages = await ChatMessage.find()
+      .sort({ timestamp: 1 })
+      .limit(50)
+      .lean();
+    
+    // تحويل التواريخ إلى سلاسل نصية (ISO format)
+    const messages = dbMessages.map(msg => ({
+      ...msg,
+      timestamp: msg.timestamp.toISOString()
+    }));
+    
     const activeUsers = chatStore.getActiveUsers();
     
     return NextResponse.json({
@@ -54,33 +70,56 @@ export async function POST(request) {
       }
     }
     
-    // إنشاء رسالة جديدة
-    const newMessage = {
-      id: Date.now().toString(),
-      message: body.message,
-      sender: body.sender,
-      userId: body.userId,
-      senderAvatarId: body.senderAvatarId || 1,
-      timestamp: new Date().toISOString(),
-      interaction: {
-        likes: [],
-        isLiked: false
-      }
-    };
-    
     try {
-      // إضافة الرسالة إلى المخزن المشترك
-      const addedMessage = chatStore.addMessage(newMessage);
+      // الاتصال بقاعدة البيانات
+      await dbConnect();
+      
+      // إنشاء رسالة جديدة في قاعدة البيانات
+      const newMessage = new ChatMessage({
+        message: body.message,
+        sender: body.sender,
+        userId: body.userId,
+        senderAvatarId: body.senderAvatarId || 1,
+        timestamp: new Date(),
+        interaction: {
+          likes: [],
+          isLiked: false
+        }
+      });
+      
+      // حفظ الرسالة في قاعدة البيانات
+      await newMessage.save();
+      
+      // إضافة الرسالة أيضًا إلى المخزن المشترك للمستخدمين النشطين
+      try {
+        const messageForStore = {
+          id: newMessage._id.toString(),
+          message: newMessage.message,
+          sender: newMessage.sender,
+          userId: newMessage.userId,
+          senderAvatarId: newMessage.senderAvatarId,
+          timestamp: newMessage.timestamp.toISOString(),
+          interaction: newMessage.interaction
+        };
+        
+        chatStore.addMessage(messageForStore);
+      } catch (storeError) {
+        console.warn('Warning: Could not add message to in-memory store:', storeError);
+      }
+      
+      // تحويل الوثيقة إلى كائن عادي وتحويل التاريخ إلى سلسلة نصية
+      const savedMessage = newMessage.toJSON();
+      savedMessage.timestamp = savedMessage.timestamp.toISOString();
       
       return NextResponse.json({
         success: true,
-        message: addedMessage
+        message: savedMessage
       });
     } catch (error) {
-      console.error('Error adding message to chat store:', error);
+      console.error('Error saving message to database:', error);
       return NextResponse.json({
         success: false,
-        error: 'فشل في إضافة الرسالة إلى المخزن'
+        error: 'فشل في حفظ الرسالة في قاعدة البيانات'
       }, { status: 500 });
     }
   } catch (error) {

@@ -101,7 +101,12 @@ export default function ChatWindow({ locale }) {
           const data = await response.json();
           
           if (data.success) {
+            // تحميل الرسائل مع الاحتفاظ بترتيبها الزمني
             setMessages(data.messages || []);
+            
+            // طباعة عدد الرسائل المستلمة
+            console.log(`تم تحميل ${data.messages?.length || 0} رسالة من قاعدة البيانات`);
+            
             // تحديث قائمة المستخدمين المتصلين
             if (data.users) {
               setOnlineUsers(data.users);
@@ -519,24 +524,24 @@ export default function ChatWindow({ locale }) {
   // إضافة وظيفة التعامل مع الإعجاب بالرسائل
   const handleLikeMessage = async (messageId) => {
     // التحقق من وجود ملف شخصي للمستخدم
-    if (!userProfile.nickname) {
+    if (!userProfile.nickname || !userProfile.userId) {
       alert('يجب إنشاء ملف شخصي قبل الإعجاب بالرسائل');
       return;
     }
     
     try {
-      // تحديث الإعجاب محليًا أولاً
+      // تحديث الإعجاب محليًا أولاً للاستجابة السريعة
       setMessages(prev => 
         prev.map(msg => {
           if (msg.id === messageId) {
-            const userLiked = msg.interaction.likes.includes('currentUserId');
+            const userLiked = msg.interaction.likes.includes(userProfile.userId);
             return {
               ...msg,
               interaction: {
                 ...msg.interaction,
                 likes: userLiked
-                  ? msg.interaction.likes.filter(id => id !== 'currentUserId')
-                  : [...msg.interaction.likes, 'currentUserId'],
+                  ? msg.interaction.likes.filter(id => id !== userProfile.userId)
+                  : [...msg.interaction.likes, userProfile.userId],
                 isLiked: !userLiked
               }
             };
@@ -554,7 +559,7 @@ export default function ChatWindow({ locale }) {
           },
           body: JSON.stringify({
             messageId,
-            userId: 'currentUserId' // في نظام حقيقي، سيتم استخدام معرف المستخدم الفعلي
+            userId: userProfile.userId
           }),
         });
         
@@ -562,13 +567,26 @@ export default function ChatWindow({ locale }) {
           const data = await response.json();
           
           if (data.success) {
-            // في حالة نجاح API، يمكن تحديث الحالة بشكل دقيق
-            // لكن ليس ضروريًا لأننا قمنا بتحديث الواجهة مسبقًا
+            // تحديث الرسالة في الواجهة بناءً على رد الخادم
+            setMessages(prev => 
+              prev.map(msg => 
+                msg.id === messageId ? { ...data.message, id: messageId } : msg
+              )
+            );
+            
+            console.log(`تم ${data.liked ? 'إضافة' : 'إزالة'} الإعجاب بالرسالة ${messageId}`);
           }
+        } else {
+          // في حالة فشل الطلب، نعيد الرسالة إلى حالتها السابقة
+          const errorData = await response.json();
+          console.error('خطأ في تحديث الإعجاب:', errorData.error);
+          // إعادة تحميل الرسائل
+          fetchMessages();
         }
       } catch (apiError) {
         console.warn('تعذر تحديث الإعجاب عبر API:', apiError);
-        // لا نحتاج إلى القيام بأي شيء لأن التحديث المحلي تم بالفعل
+        // إعادة تحميل الرسائل
+        fetchMessages();
       }
     } catch (error) {
       console.error('Error liking message:', error);
