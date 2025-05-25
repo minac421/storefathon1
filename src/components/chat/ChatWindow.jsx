@@ -338,15 +338,25 @@ export default function ChatWindow({ locale }) {
       // ضمان أن avatarId عدد
       const numericId = parseInt(avatarId) || 1;
       
+      // طباعة رسالة تصحيح للتأكد من معرف الأفاتار
+      console.log('Getting avatar for ID:', numericId);
+      
       // البحث عن الأفاتار بالمعرف الصحيح
       const avatar = AVAILABLE_AVATARS.find(a => a.id === numericId);
       
       if (avatar) {
+        console.log('Found avatar:', avatar.src);
         return avatar.src;
       }
       
       // إذا لم يتم العثور على الصورة، استخدم الصورة الافتراضية
       console.warn('Avatar not found for ID:', numericId);
+      
+      // استخدام الأفاتار الافتراضي الأول إذا كان متاحًا
+      if (AVAILABLE_AVATARS && AVAILABLE_AVATARS.length > 0) {
+        return AVAILABLE_AVATARS[0].src;
+      }
+      
       return '/images/avatars/hero_icon_8_wake.png'; // صورة افتراضية
     } catch (error) {
       console.error('Error getting avatar src:', error);
@@ -356,22 +366,30 @@ export default function ChatWindow({ locale }) {
   
   // الحصول على معلومات المستخدم من الرسالة
   const getUserInfoFromMessage = (msg) => {
+    // التحقق من وجود معرف الأفاتار في الرسالة نفسها أولاً
+    if (msg.senderAvatarId) {
+      return {
+        avatarId: msg.senderAvatarId,
+        isOnline: true
+      };
+    }
+
     // البحث عن المستخدم في قائمة المستخدمين النشطين
     const activeUser = onlineUsers.find(user => 
       user.userId === msg.userId || user.nickname === msg.sender
     );
     
     // استخدام بيانات المستخدم النشط إذا وجد
-    if (activeUser) {
+    if (activeUser && activeUser.avatarId) {
       return {
-        avatarId: activeUser.avatarId || msg.senderAvatarId || 1,
+        avatarId: activeUser.avatarId,
         isOnline: true
       };
     }
     
-    // استخدام بيانات الرسالة مباشرة
+    // استخدام القيمة الافتراضية إذا لم يتم العثور على أي معرف أفاتار
     return {
-      avatarId: msg.senderAvatarId || 1,
+      avatarId: 1,
       isOnline: false
     };
   };
@@ -418,11 +436,18 @@ export default function ChatWindow({ locale }) {
       setMessage(''); // مسح مربع الإدخال فوراً لتحسين تجربة المستخدم
       
       try {
+        // طباعة معلومات المستخدم للتأكد من صحة البيانات
+        console.log('User profile before sending message:', {
+          nickname: userProfile.nickname,
+          userId: userProfile.userId,
+          avatarId: userProfile.avatarId
+        });
+        
         const messageData = {
           message: currentMessage,
           sender: userProfile.nickname,
           userId: userProfile.userId,
-          senderAvatarId: userProfile.avatarId
+          senderAvatarId: userProfile.avatarId || 1 // ضمان وجود قيمة افتراضية
         };
         
         // إنشاء معرف فريد للرسالة المحلية
@@ -461,14 +486,6 @@ export default function ChatWindow({ locale }) {
           const data = await response.json();
           
           if (data.success) {
-            // إرسال الرسالة عبر socket.io لكل المتصلين
-            if (socket) {
-              socket.emit('send-message', {
-                room: 'global',
-                ...messageData
-              });
-            }
-            
             // تحديث الرسالة المحلية بالمعرف الجديد وإزالة علامة pending
             setMessages(prev => 
               prev.map(msg => 
@@ -773,6 +790,7 @@ export default function ChatWindow({ locale }) {
                                 <img 
                                   src={getAvatarSrc(getUserInfoFromMessage(msg).avatarId)} 
                                   alt={msg.sender} 
+                                  title={`${msg.sender} (Avatar ID: ${getUserInfoFromMessage(msg).avatarId})`}
                                   className="w-full h-full object-cover"
                                 />
                               </div>
@@ -836,6 +854,7 @@ export default function ChatWindow({ locale }) {
                                 <img 
                                   src={getAvatarSrc(getUserInfoFromMessage(msg).avatarId)} 
                                   alt={msg.sender} 
+                                  title={`${msg.sender} (Avatar ID: ${getUserInfoFromMessage(msg).avatarId})`}
                                   className="w-full h-full object-cover"
                                 />
                               </div>
