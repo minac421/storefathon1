@@ -1,25 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-// تخزين مؤقت للرسائل (في نظام حقيقي، سيتم استخدام قاعدة بيانات)
-let chatMessages: any[] = [];
+import dbConnect from '@/lib/dbConnect';
+import ChatMessage from '@/models/ChatMessage';
+import { chatStore } from '@/utils/chatStore';
+import { Model } from 'mongoose';
 
 // الحد الأقصى لعدد الرسائل المخزنة
 const MAX_MESSAGES = 50;
 
 export async function GET(req: NextRequest) {
   try {
-    const url = new URL(req.url);
-    const limit = parseInt(url.searchParams.get('limit') || '50');
+    // الاتصال بقاعدة البيانات
+    await dbConnect();
     
-    // استرجاع الرسائل، مرتبة من الأحدث إلى الأقدم ثم عكسها
-    const messages = [...chatMessages]
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-      .slice(0, limit)
-      .reverse();
+    // جلب آخر 50 رسالة مرتبة حسب الوقت (من الأحدث للأقدم)
+    const chatMessageModel = ChatMessage as Model<any>;
+    const dbMessages = await chatMessageModel.find()
+      .sort({ timestamp: -1 })
+      .limit(MAX_MESSAGES)
+      .lean();
+    
+    // ترتيب الرسائل من الأقدم للأحدث للعرض
+    const messages = dbMessages
+      .reverse()
+      .map(msg => ({
+        ...msg,
+        id: msg._id.toString(),
+        timestamp: msg.timestamp.toISOString()
+      }));
+    
+    // جلب المستخدمين النشطين
+    const activeUsers = chatStore.getActiveUsers();
     
     return NextResponse.json({ 
       success: true, 
-      messages
+      messages,
+      users: activeUsers
     });
   } catch (error) {
     console.error('Error fetching chat messages:', error);
@@ -32,7 +47,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { message, sender, senderAvatarId } = await req.json();
+    const { message, sender, senderAvatarId, userId } = await req.json();
     
     // التحقق من بيانات الرسالة
     if (!message || typeof message !== 'string' || !message.trim()) {
@@ -49,32 +64,88 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
     
-    // إنشاء رسالة جديدة
-    const newMessage = {
-      id: Date.now().toString(),
-      sender,
-      senderAvatarId,
-      message: message.trim(),
-      timestamp: new Date().toISOString(),
-      interaction: {
-        likes: [],
-        isLiked: false
-      }
-    };
-    
-    // إضافة الرسالة إلى المجموعة
-    chatMessages.push(newMessage);
-    
-    // التأكد من عدم تجاوز الحد الأقصى للرسائل
-    if (chatMessages.length > MAX_MESSAGES) {
-      // إزالة الرسائل الأقدم
-      chatMessages = chatMessages.slice(-MAX_MESSAGES);
+    if (!userId) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'معرف المستخدم مطلوب' 
+      }, { status: 400 });
     }
     
-    return NextResponse.json({ 
-      success: true, 
-      message: newMessage
-    });
+    // التحقق من أن المستخدم نشط في chatStore
+    let user = chatStore.activeUsers.get(userId);
+    if (!user) {
+      // محاولة إعادة تسجيل المستخدم تلقائياً
+      try {
+        chatStore.addUser({
+          userId,
+          nickname: sender,
+          avatarId: senderAvatarId || 1,
+          status: 'online'
+        });
+      } catch (error) {
+        console.error('Error adding user to active users:', error);
+      }
+    }
+    
+    try {
+      // الاتصال بقاعدة البيانات
+      await dbConnect();
+      
+      // إنشاء رسالة جديدة في قاعدة البيانات
+      const newMessage = new ChatMessage({
+        message: message.trim(),
+        sender,
+        userId,
+        senderAvatarId: senderAvatarId || 1,
+        timestamp: new Date(),
+        interaction: {
+          likes: [],
+          isLiked: false
+        }
+      });
+      
+      // حفظ الرسالة في قاعدة البيانات
+      await newMessage.save();
+      
+      // حساب عدد الرسائل الكلي
+      const chatMessageModel = ChatMessage as Model<any>;
+      const totalMessages = await chatMessageModel.countDocuments();
+      
+      // إذا تجاوز عدد الرسائل الحد الأقصى، نحذف الرسائل الأقدم
+      if (totalMessages > MAX_MESSAGES) {
+        const messagesToDelete = totalMessages - MAX_MESSAGES;
+        
+        // الحصول على أقدم الرسائل للحذف
+        const oldestMessages = await chatMessageModel.find()
+          .sort({ timestamp: 1 })
+          .limit(messagesToDelete)
+          .lean();
+        
+        // حذف الرسائل القديمة
+        if (oldestMessages.length > 0) {
+          const oldestIds = oldestMessages.map(msg => msg._id);
+          await chatMessageModel.deleteMany({ _id: { $in: oldestIds } });
+        }
+      }
+      
+      // تحويل الوثيقة إلى كائن عادي وتحويل التاريخ إلى سلسلة نصية
+      const savedMessage = {
+        ...newMessage.toObject(),
+        id: newMessage._id.toString(),
+        timestamp: newMessage.timestamp.toISOString()
+      };
+      
+      return NextResponse.json({ 
+        success: true, 
+        message: savedMessage
+      });
+    } catch (dbError) {
+      console.error('Error saving message to database:', dbError);
+      return NextResponse.json({ 
+        success: false, 
+        error: 'فشل في حفظ الرسالة في قاعدة البيانات' 
+      }, { status: 500 });
+    }
   } catch (error) {
     console.error('Error sending chat message:', error);
     return NextResponse.json({ 
