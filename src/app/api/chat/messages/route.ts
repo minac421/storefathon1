@@ -22,11 +22,25 @@ export async function GET(req: NextRequest) {
     // ترتيب الرسائل من الأقدم للأحدث للعرض
     const messages = dbMessages
       .reverse()
-      .map(msg => ({
-        ...msg,
-        id: msg._id.toString(),
-        timestamp: msg.timestamp.toISOString()
-      }));
+      .map(msg => {
+        // التحقق مما إذا كان الوقت عبارة عن كائن تاريخ أو سلسلة نصية
+        let formattedTimestamp = msg.timestamp;
+        if (msg.timestamp instanceof Date) {
+          formattedTimestamp = msg.timestamp.toISOString();
+        } else if (typeof msg.timestamp === 'string') {
+          // إذا كان بالفعل سلسلة نصية، نحتفظ به كما هو
+          formattedTimestamp = msg.timestamp;
+        } else {
+          // إذا كان رقمًا أو قيمة أخرى، نحوله إلى سلسلة نصية
+          formattedTimestamp = new Date(msg.timestamp).toISOString();
+        }
+
+        return {
+          ...msg,
+          id: msg._id.toString(),
+          timestamp: formattedTimestamp
+        };
+      });
     
     // جلب المستخدمين النشطين
     const activeUsers = chatStore.getActiveUsers();
@@ -129,10 +143,22 @@ export async function POST(req: NextRequest) {
       }
       
       // تحويل الوثيقة إلى كائن عادي وتحويل التاريخ إلى سلسلة نصية
+      const messageObj = newMessage.toObject();
+      
+      // معالجة التاريخ بشكل صحيح
+      let formattedTimestamp = messageObj.timestamp;
+      if (messageObj.timestamp instanceof Date) {
+        formattedTimestamp = messageObj.timestamp.toISOString();
+      } else if (typeof messageObj.timestamp === 'string') {
+        formattedTimestamp = messageObj.timestamp;
+      } else {
+        formattedTimestamp = new Date(messageObj.timestamp).toISOString();
+      }
+      
       const savedMessage = {
-        ...newMessage.toObject(),
-        id: newMessage._id.toString(),
-        timestamp: newMessage.timestamp.toISOString()
+        ...messageObj,
+        id: messageObj._id.toString(),
+        timestamp: formattedTimestamp
       };
       
       return NextResponse.json({ 

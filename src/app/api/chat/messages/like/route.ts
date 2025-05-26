@@ -62,12 +62,22 @@ export async function POST(req: NextRequest) {
       // تحويل الوثيقة إلى كائن عادي
       const messageObj = message.toObject();
       
+      // معالجة التاريخ بشكل صحيح
+      let formattedTimestamp = messageObj.timestamp;
+      if (messageObj.timestamp instanceof Date) {
+        formattedTimestamp = messageObj.timestamp.toISOString();
+      } else if (typeof messageObj.timestamp === 'string') {
+        formattedTimestamp = messageObj.timestamp;
+      } else {
+        formattedTimestamp = new Date(messageObj.timestamp).toISOString();
+      }
+      
       return NextResponse.json({ 
         success: true, 
         message: {
           ...messageObj,
           id: messageObj._id.toString(),
-          timestamp: messageObj.timestamp.toISOString(),
+          timestamp: formattedTimestamp,
           interaction: {
             ...messageObj.interaction,
             isLiked: !userLiked
