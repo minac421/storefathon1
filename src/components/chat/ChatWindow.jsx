@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { getUserSettings } from '@/utils/userSettings';
 import { AVAILABLE_AVATARS } from '@/utils/userSettings';
-import { createMockOnlineUsers } from '@/utils/mockData';
 
 export default function ChatWindow({ locale }) {
   const [message, setMessage] = useState('');

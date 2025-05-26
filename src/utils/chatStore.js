@@ -1,5 +1,3 @@
-import { createMockOnlineUsers } from '@/utils/mockData';
-
 // مخزن مشترك للدردشة - يستخدم على جانب الخادم والعميل
 export const chatStore = {
   // مصفوفة الرسائل
@@ -9,7 +7,7 @@ export const chatStore = {
   lastMessageId: 1,
   
   // الحد الأقصى لعدد الرسائل المخزنة
-  maxMessages: 100,
+  maxMessages: 50,
 
   // قائمة المستخدمين النشطين
   activeUsers: new Map(),

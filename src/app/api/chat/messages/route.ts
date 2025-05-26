@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createMockMessages } from '@/utils/mockData';
 
 // تخزين مؤقت للرسائل (في نظام حقيقي، سيتم استخدام قاعدة بيانات)
-let chatMessages = createMockMessages();
+let chatMessages: any[] = [];
+
+// الحد الأقصى لعدد الرسائل المخزنة
+const MAX_MESSAGES = 50;
 
 export async function GET(req: NextRequest) {
   try {
@@ -62,6 +64,12 @@ export async function POST(req: NextRequest) {
     
     // إضافة الرسالة إلى المجموعة
     chatMessages.push(newMessage);
+    
+    // التأكد من عدم تجاوز الحد الأقصى للرسائل
+    if (chatMessages.length > MAX_MESSAGES) {
+      // إزالة الرسائل الأقدم
+      chatMessages = chatMessages.slice(-MAX_MESSAGES);
+    }
     
     return NextResponse.json({ 
       success: true, 

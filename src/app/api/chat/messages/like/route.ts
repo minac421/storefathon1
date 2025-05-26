@@ -1,16 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createMockMessages } from '@/utils/mockData';
 
 // استخدام نفس مصدر البيانات للرسائل المستخدم في API الرسائل
 // في بيئة حقيقية، سيتم استخدام قاعدة بيانات
-// نحن نستخدم المتغير المستورد من ملف آخر، لذا فإن التغييرات ستكون محلية وستُفقد عند إعادة تشغيل الخادم
-// ولكن هذه نسخة تجريبية
 let chatMessages: any[] = [];
-
-// استدعاء الدالة المعدة مسبقًا إذا كانت المصفوفة فارغة
-if (chatMessages.length === 0) {
-  chatMessages = createMockMessages();
-}
 
 export async function POST(req: NextRequest) {
   try {
