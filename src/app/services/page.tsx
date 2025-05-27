@@ -20,6 +20,7 @@ type ServicesData = {
   castle: any[];
   bots: any[];
   events: any[];
+  charging: any[];
 };
 
 // حالة البيانات الافتراضية لعرضها أثناء التحميل
@@ -27,7 +28,105 @@ const defaultServices: ServicesData = {
   resources: [],
   castle: [],
   bots: [],
-  events: []
+  events: [],
+  charging: [
+    {
+      id: 'charging-gems-100',
+      name: {
+        ar: '100 جوهرة',
+        en: '100 Gems',
+        tr: '100 Mücevher'
+      },
+      description: {
+        ar: 'اشحن حسابك بـ 100 جوهرة للاستمتاع بمزايا إضافية في اللعبة',
+        en: 'Charge your account with 100 gems to enjoy additional in-game benefits',
+        tr: 'Oyun içi ek avantajların keyfini çıkarmak için hesabınıza 100 mücevher yükleyin'
+      },
+      price: 10,
+      iconAlt: '100 جوهرة',
+      popular: false
+    },
+    {
+      id: 'charging-gems-500',
+      name: {
+        ar: '500 جوهرة',
+        en: '500 Gems',
+        tr: '500 Mücevher'
+      },
+      description: {
+        ar: 'اشحن حسابك بـ 500 جوهرة مع خصم 10% على السعر الأصلي',
+        en: 'Charge your account with 500 gems with a 10% discount on the original price',
+        tr: 'Hesabınıza orijinal fiyat üzerinden %10 indirimle 500 mücevher yükleyin'
+      },
+      price: 45,
+      iconAlt: '500 جوهرة',
+      popular: true
+    },
+    {
+      id: 'charging-gems-1000',
+      name: {
+        ar: '1000 جوهرة',
+        en: '1000 Gems',
+        tr: '1000 Mücevher'
+      },
+      description: {
+        ar: 'اشحن حسابك بـ 1000 جوهرة مع خصم 15% على السعر الأصلي',
+        en: 'Charge your account with 1000 gems with a 15% discount on the original price',
+        tr: 'Hesabınıza orijinal fiyat üzerinden %15 indirimle 1000 mücevher yükleyin'
+      },
+      price: 85,
+      iconAlt: '1000 جوهرة',
+      popular: false
+    },
+    {
+      id: 'charging-vip-week',
+      name: {
+        ar: 'عضوية VIP أسبوعية',
+        en: 'VIP Membership - Weekly',
+        tr: 'VIP Üyelik - Haftalık'
+      },
+      description: {
+        ar: 'استمتع بمزايا VIP لمدة أسبوع كامل - تسريع إنتاج، مكافآت يومية، وعروض حصرية',
+        en: 'Enjoy VIP benefits for a full week - production acceleration, daily rewards, and exclusive offers',
+        tr: 'Tam bir hafta boyunca VIP avantajlarının keyfini çıkarın - üretim hızlandırma, günlük ödüller ve özel teklifler'
+      },
+      price: 15,
+      iconAlt: 'VIP أسبوعي',
+      popular: false
+    },
+    {
+      id: 'charging-vip-month',
+      name: {
+        ar: 'عضوية VIP شهرية',
+        en: 'VIP Membership - Monthly',
+        tr: 'VIP Üyelik - Aylık'
+      },
+      description: {
+        ar: 'استمتع بمزايا VIP لمدة شهر كامل - خصم 20% مقارنة بالاشتراك الأسبوعي',
+        en: 'Enjoy VIP benefits for a full month - 20% discount compared to weekly subscription',
+        tr: 'Tam bir ay boyunca VIP avantajlarının keyfini çıkarın - haftalık aboneliğe kıyasla %20 indirim'
+      },
+      price: 49,
+      iconAlt: 'VIP شهري',
+      popular: true
+    },
+    {
+      id: 'charging-speed-up',
+      name: {
+        ar: 'تسريع بناء × 10',
+        en: 'Building Speed-Up × 10',
+        tr: 'Bina Hızlandırma × 10'
+      },
+      description: {
+        ar: 'تسريع بناء وتطوير المباني بعامل 10 أضعاف لمدة يوم كامل',
+        en: 'Speed up building and development by a factor of 10 for a full day',
+        tr: 'Tam bir gün boyunca bina ve geliştirmeyi 10 kat hızlandırın'
+      },
+      price: 30,
+      iconAlt: 'تسريع بناء',
+      popular: false
+    }
+  ]
 };
 
 export default function ServicesPage() {
@@ -73,7 +172,7 @@ export default function ServicesPage() {
   }, []);
   
   // حالة الفئة النشطة
-  const [activeCategory, setActiveCategory] = useState<'resources' | 'bots' | 'castle' | 'events'>('resources');
+  const [activeCategory, setActiveCategory] = useState<'resources' | 'bots' | 'castle' | 'events' | 'charging'>('resources');
   
   // تحميل عناصر السلة من التخزين المحلي عند التحميل الأولي
   useEffect(() => {
@@ -128,7 +227,7 @@ export default function ServicesPage() {
   };
 
   // إضافة منتج للسلة
-  const handleAddToCart = (item: any, category: 'resources' | 'bots' | 'castle' | 'events') => {
+  const handleAddToCart = (item: any, category: 'resources' | 'bots' | 'castle' | 'events' | 'charging') => {
     const key = `${category}-${item.id}`;
     const quantity = quantities[key] || 1; // استخدام الكمية المحددة
     
@@ -231,12 +330,12 @@ export default function ServicesPage() {
       tr: 'Doğrudan kullanıma hazır kaleler satın alın'
     },
     botsTitle: {
-      ar: 'الروبوتات',
+      ar: 'البوتات',
       en: 'Bots',
       tr: 'Botlar'
     },
     botsSubtitle: {
-      ar: 'تمتع بالمساعدة الآلية مع روبوتات متخصصة',
+      ar: 'تمتع بالمساعدة الآلية مع بوتات متخصصة',
       en: 'Enjoy automated assistance with specialized bots',
       tr: 'Özel botlarla otomatik yardımın keyfini çıkarın'
     },
@@ -249,6 +348,16 @@ export default function ServicesPage() {
       ar: 'احصل على قيمة أكبر مع حزمنا المخصصة للأحداث',
       en: 'Get more value with our event packages',
       tr: 'Etkinlik paketlerimizle daha fazla değer elde edin'
+    },
+    chargingTitle: {
+      ar: 'الشحن',
+      en: 'Charging',
+      tr: 'Şarj'
+    },
+    chargingSubtitle: {
+      ar: 'اشحن حسابك بسرعة وأمان مع خدمات الشحن المميزة',
+      en: 'Charge your account quickly and securely with our premium charging services',
+      tr: 'Premium şarj hizmetlerimizle hesabınızı hızlı ve güvenli bir şekilde şarj edin'
     },
     price: {
       ar: 'السعر',
@@ -303,7 +412,7 @@ export default function ServicesPage() {
   // استخدام وظائف الكمية المعرفة سابقاً
 
   // عنصر عرض المنتج
-  const ProductCard = ({ item, category }: { item: any, category: 'resources' | 'bots' | 'castle' | 'events' }) => {
+  const ProductCard = ({ item, category }: { item: any, category: 'resources' | 'bots' | 'castle' | 'events' | 'charging' }) => {
     const productKey = `${category}-${item.id}`;
     const currentQuantity = quantities[productKey] || 1;
     
@@ -314,6 +423,7 @@ export default function ServicesPage() {
         case 'bots': return 'bg-gradient-to-br from-blue-300 to-blue-100';
         case 'events': return 'bg-gradient-to-br from-purple-300 to-purple-100';
         case 'castle': return 'bg-gradient-to-br from-amber-300 to-amber-100';
+        case 'charging': return 'bg-gradient-to-br from-pink-300 to-pink-100';
         default: return 'bg-gradient-to-br from-gray-300 to-gray-100';
       }
     };
@@ -325,6 +435,7 @@ export default function ServicesPage() {
         case 'bots': return 'border-blue-200';
         case 'events': return 'border-purple-200';
         case 'castle': return 'border-amber-200';
+        case 'charging': return 'border-pink-200';
         default: return 'border-gray-200';
       }
     };
@@ -350,7 +461,9 @@ export default function ServicesPage() {
             ? 'bg-gradient-to-r from-blue-400 to-blue-500' 
             : category === 'events' 
               ? 'bg-gradient-to-r from-purple-400 to-purple-500' 
-              : 'bg-gradient-to-r from-amber-400 to-amber-500'}`}></div>
+              : category === 'castle' 
+                ? 'bg-gradient-to-r from-amber-400 to-amber-500'
+                : 'bg-gradient-to-r from-pink-400 to-pink-500'}`}></div>
         
         <div className="p-6">
           {/* أيقونة المنتج بتصميم محسن */}
@@ -384,6 +497,10 @@ export default function ServicesPage() {
               ) : category === 'castle' ? (
                 <div className="relative z-10 transform transition-transform duration-300 group-hover:scale-110">
                   <span role="img" aria-label="قلعة" className="text-5xl">🏰</span>
+                </div>
+              ) : category === 'charging' ? (
+                <div className="relative z-10 transform transition-transform duration-300 group-hover:scale-110">
+                  <span role="img" aria-label="شحن" className="text-5xl">💳</span>
                 </div>
               ) : (
                 <div className="relative z-10">{item.iconAlt}</div>
@@ -545,7 +662,15 @@ export default function ServicesPage() {
               className={`px-6 py-3 rounded-full flex items-center gap-2 text-lg ${activeCategory === 'bots' ? 'bg-amber-100 text-amber-800 font-medium' : 'bg-white/20 text-white hover:bg-white/30'}`}
             >
               <span className="text-xl bg-amber-100 w-10 h-10 rounded-full flex items-center justify-center text-amber-700">🤖</span>
-              <span>الروبوتات</span>
+              <span>البوتات</span>
+            </button>
+            
+            <button
+              onClick={() => setActiveCategory('charging')}
+              className={`px-6 py-3 rounded-full flex items-center gap-2 text-lg ${activeCategory === 'charging' ? 'bg-amber-100 text-amber-800 font-medium' : 'bg-white/20 text-white hover:bg-white/30'}`}
+            >
+              <span className="text-xl bg-amber-100 w-10 h-10 rounded-full flex items-center justify-center text-amber-700">💳</span>
+              <span>الشحن</span>
             </button>
           </div>
         </div>
@@ -664,6 +789,37 @@ export default function ServicesPage() {
             ) : (
               <div className="text-center py-10 text-gray-500">
                 <p>لا توجد فعاليات متاحة حاليًا</p>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {!loading && activeCategory === 'charging' && (
+          <div className="mb-20">
+            <h2 className="text-3xl font-bold mb-4 text-center text-amber-700">
+              {translations.chargingTitle[locale as keyof typeof translations.chargingTitle]}
+            </h2>
+            <p className="text-center text-gray-600 max-w-2xl mx-auto mb-10">
+              {translations.chargingSubtitle[locale as keyof typeof translations.chargingSubtitle]}
+            </p>
+            
+            {services.charging && services.charging.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {services.charging.map((item, index) => (
+                  <div key={item.id} 
+                    className={`${item.popular ? 'relative' : ''}`}>
+                    {item.popular && (
+                      <div className="absolute -top-4 left-0 right-0 bg-amber-500 text-white text-center py-1 rounded-t-lg z-10">
+                        {translations.popular[locale as keyof typeof translations.popular]}
+                      </div>
+                    )}
+                    <ProductCard item={item} category="charging" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-10 text-gray-500">
+                <p>لا توجد خدمات شحن متاحة حاليًا</p>
               </div>
             )}
           </div>

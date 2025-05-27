@@ -57,7 +57,8 @@ export async function GET(request: NextRequest) {
       resources: results.filter(service => service.category === 'resources'),
       castle: results.filter(service => service.category === 'castle'),
       bots: results.filter(service => service.category === 'bots'),
-      events: results.filter(service => service.category === 'events')
+      events: results.filter(service => service.category === 'events'),
+      charging: results.filter(service => service.category === 'charging')
     };
     
     // إرجاع جميع الخدمات في مصفوفة واحدة مع تحديد ترميز UTF-8
@@ -131,6 +132,34 @@ export async function GET(request: NextRequest) {
           icon: '👑',
           popular: false
         }
+      ],
+      charging: [
+        {
+          id: 'charging-gems-100',
+          name: { ar: '100 جوهرة', en: '100 Gems', tr: '100 Mücevher' },
+          description: {
+            ar: 'اشحن حسابك بـ 100 جوهرة للاستمتاع بمزايا إضافية في اللعبة',
+            en: 'Charge your account with 100 gems to enjoy additional in-game benefits',
+            tr: 'Oyun içi ek avantajların keyfini çıkarmak için hesabınıza 100 mücevher yükleyin'
+          },
+          price: 10,
+          icon: '💳',
+          iconAlt: '100 جوهرة',
+          popular: false
+        },
+        {
+          id: 'charging-gems-500',
+          name: { ar: '500 جوهرة', en: '500 Gems', tr: '500 Mücevher' },
+          description: {
+            ar: 'اشحن حسابك بـ 500 جوهرة مع خصم 10% على السعر الأصلي',
+            en: 'Charge your account with 500 gems with a 10% discount on the original price',
+            tr: 'Hesabınıza orijinal fiyat üzerinden %10 indirimle 500 mücevher yükleyin'
+          },
+          price: 45,
+          icon: '💳',
+          iconAlt: '500 جوهرة',
+          popular: true
+        }
       ]
     };
     
@@ -154,11 +183,29 @@ export async function POST(request: NextRequest) {
     await dbConnect();
     const serviceData = await request.json();
     
+    console.log('بيانات الخدمة المستلمة في API:', {
+      category: serviceData.category,
+      id: serviceData.id,
+      name: serviceData.name
+    });
+    
     // التحقق من وجود معرف الخدمة
     const existingService = await (ServiceModel as Model<any>).findOne({ id: serviceData.id });
     if (existingService) {
       return new NextResponse(JSON.stringify({
         error: 'معرف الخدمة مستخدم بالفعل، الرجاء استخدام معرف آخر'
+      }), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8'
+        }
+      });
+    }
+    
+    // التأكد من صحة الفئة
+    if (serviceData.category && !['resources', 'bots', 'castle', 'events', 'charging'].includes(serviceData.category)) {
+      return new NextResponse(JSON.stringify({
+        error: `فئة الخدمة غير صالحة: ${serviceData.category}`
       }), {
         status: 400,
         headers: {
@@ -178,10 +225,17 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json; charset=utf-8'
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('خطأ في إضافة خدمة جديدة:', error);
+    let errorMessage = 'حدث خطأ أثناء إضافة الخدمة الجديدة';
+    
+    // التعامل مع أخطاء التحقق من قاعدة البيانات
+    if (error.name === 'ValidationError') {
+      errorMessage = Object.values(error.errors).map((err: any) => err.message).join(', ');
+    }
+    
     return new NextResponse(JSON.stringify(
-      { error: 'حدث خطأ أثناء إضافة الخدمة الجديدة' }
+      { error: errorMessage }
     ), {
       status: 500,
       headers: {

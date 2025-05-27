@@ -46,6 +46,7 @@ export async function GET(request: NextRequest) {
         items: order.items,
         totalPrice: order.totalPrice,
         status: order.status,
+        images: order.images || {},
         createdAt: order.createdAt,
         updatedAt: order.updatedAt
       };

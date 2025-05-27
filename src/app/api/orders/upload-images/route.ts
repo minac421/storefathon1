@@ -61,31 +61,23 @@ const uploadImageToStorage = async (file: File, orderId: string, imageType: stri
     const dirPath = path.join(LOCAL_STORAGE_DIR, orderId);
     const filePath = path.join(dirPath, fileName);
 
+    console.log(`محاولة حفظ الصورة في المسار: ${filePath}`);
+
     // إنشاء مجلد الطلب إذا لم يكن موجودًا
     if (!fs.existsSync(dirPath)) {
       await fsPromises.mkdir(dirPath, { recursive: true });
+      console.log(`تم إنشاء المجلد: ${dirPath}`);
     }
 
     // كتابة الملف
     await fsPromises.writeFile(filePath, buffer);
+    console.log(`تم حفظ الملف بنجاح`);
 
-    // في التطوير، نرجع الصورة كشفرة base64 لتجنب مشاكل المسارات
-    if (IS_DEVELOPMENT) {
-      const contentType = getContentType(file.name);
-      const base64Data = buffer.toString('base64');
-      const dataUrl = `data:${contentType};base64,${base64Data}`;
-      console.log(`تم تحويل الصورة إلى شفرة base64`);
-      return dataUrl;
-    } else {
-      // في الإنتاج، نستخدم مسار الملف العادي
-      const imageUrl = `${LOCAL_STORAGE_URL_PREFIX}/${orderId}/${fileName}`;
-      console.log(`تم حفظ الصورة في: ${filePath}`);
-      console.log(`الرابط المحلي: ${imageUrl}`);
-      return imageUrl;
-    }
+    // استخدام مسار URL ثابت للتطوير والإنتاج
+    const imageUrl = `${LOCAL_STORAGE_URL_PREFIX}/${orderId}/${fileName}`;
+    console.log(`الرابط المحلي: ${imageUrl}`);
     
-    // لاستخدام خدمة سحابية في الإنتاج (يمكن تنشيط هذا الجزء لاحقًا)
-    // return `https://storage.example.com/orders/${orderId}/${imageType}_${uniqueId}.${fileExtension}`;
+    return imageUrl;
   } catch (error) {
     console.error(`خطأ في رفع صورة ${imageType}:`, error);
     throw error;
@@ -123,12 +115,22 @@ export async function POST(request: NextRequest) {
     let nameImageUrl: string | null = null;
 
     // رفع الصور إذا وجدت
-    if (coordImage) {
-      coordImageUrl = await uploadImageToStorage(coordImage, orderId, 'coord');
+    if (coordImage && coordImage.size > 0) {
+      try {
+        coordImageUrl = await uploadImageToStorage(coordImage, orderId, 'coord');
+        console.log(`تم رفع صورة الإحداثيات بنجاح: ${coordImageUrl}`);
+      } catch (error) {
+        console.error(`فشل رفع صورة الإحداثيات:`, error);
+      }
     }
 
-    if (nameImage) {
-      nameImageUrl = await uploadImageToStorage(nameImage, orderId, 'name');
+    if (nameImage && nameImage.size > 0) {
+      try {
+        nameImageUrl = await uploadImageToStorage(nameImage, orderId, 'name');
+        console.log(`تم رفع صورة الاسم بنجاح: ${nameImageUrl}`);
+      } catch (error) {
+        console.error(`فشل رفع صورة الاسم:`, error);
+      }
     }
 
     // التحقق من وجود الطلب قبل التحديث
@@ -140,16 +142,32 @@ export async function POST(request: NextRequest) {
       );
     }
     
+    // تحديث وثيقة الطلب بالصور الجديدة
+    const updateData: any = {
+      'updatedAt': new Date()
+    };
+    
+    // إضافة مسارات الصور فقط إذا تم رفعها بنجاح
+    if (coordImageUrl) {
+      updateData['images.coordImageUrl'] = coordImageUrl;
+    }
+    
+    if (nameImageUrl) {
+      updateData['images.nameImageUrl'] = nameImageUrl;
+    }
+    
+    // تأكد من وجود كائن images إذا لم يكن موجودًا
+    if (!order.images) {
+      await (OrderModel as Model<any>).updateOne(
+        { _id: orderId },
+        { $set: { 'images': {} } }
+      );
+    }
+    
     // تحديث الطلب بروابط الصور
     const updateResult = await (OrderModel as Model<any>).updateOne(
       { _id: orderId },
-      {
-        $set: {
-          'images.coordImageUrl': coordImageUrl,
-          'images.nameImageUrl': nameImageUrl,
-          'updatedAt': new Date()
-        }
-      }
+      { $set: updateData }
     );
     
     console.log(`نتيجة تحديث الطلب:`, updateResult);
@@ -167,7 +185,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('خطأ أثناء رفع الصور:', error);
     return NextResponse.json(
-      { error: 'فشل رفع الصور' },
+      { error: 'فشل رفع الصور', details: (error as Error).message },
       { status: 500 }
     );
   }

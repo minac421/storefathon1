@@ -211,12 +211,12 @@ export default function ServicesPage() {
       tr: 'Doğrudan kullanıma hazır kaleler satın alın'
     },
     botsTitle: {
-      ar: 'الروبوتات',
+      ar: 'البوتات',
       en: 'Bots',
       tr: 'Botlar'
     },
     botsSubtitle: {
-      ar: 'تمتع بالمساعدة الآلية مع روبوتات متخصصة',
+      ar: 'تمتع بالمساعدة الآلية مع بوتات متخصصة',
       en: 'Enjoy automated assistance with specialized bots',
       tr: 'Özel botlarla otomatik yardımın keyfini çıkarın'
     },
@@ -372,7 +372,7 @@ export default function ServicesPage() {
             className={`px-8 py-3 rounded-full flex items-center gap-2 text-lg transition-all transform hover:scale-105 ${activeCategory === 'bots' ? 'bg-amber-100 text-amber-800 font-medium' : 'bg-amber-600 text-white opacity-90 hover:opacity-100'}`}
           >
             <span className="text-xl">🤖</span>
-            <span>الروبوتات</span>
+            <span>البوتات</span>
           </button>
         </div>
       </div>
