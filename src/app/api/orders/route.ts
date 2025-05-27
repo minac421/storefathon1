@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import OrderModel from '@/models/Order';
 import { Document, Model, Query } from 'mongoose';
+import mongoose from 'mongoose';
 
 // الحصول على جميع الطلبات
 export async function GET(request: NextRequest) {
@@ -82,20 +83,83 @@ export async function GET(request: NextRequest) {
 // إنشاء طلب جديد
 export async function POST(request: NextRequest) {
   try {
-    await dbConnect();
-    const orderData = await request.json();
+    console.log('بدء إنشاء طلب جديد...');
     
-    // توليد رقم طلب فريد - التاريخ الحالي + 4 أرقام عشوائية
+    // الاتصال بقاعدة البيانات
+    await dbConnect();
+    console.log('تم الاتصال بقاعدة البيانات بنجاح');
+    
+    // قراءة بيانات الطلب
+    const orderData = await request.json();
+    console.log('بيانات الطلب المستلمة:', JSON.stringify(orderData, null, 2));
+    
+    // التحقق من البيانات المطلوبة بشكل مفصل
+    if (!orderData.customer) {
+      return new NextResponse(JSON.stringify(
+        { error: 'بيانات العميل مفقودة' }
+      ), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8'
+        }
+      });
+    }
+    
+    if (!orderData.items || !Array.isArray(orderData.items) || orderData.items.length === 0) {
+      return new NextResponse(JSON.stringify(
+        { error: 'قائمة المنتجات فارغة أو غير صالحة' }
+      ), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8'
+        }
+      });
+    }
+    
+    if (orderData.totalPrice === undefined || isNaN(orderData.totalPrice)) {
+      return new NextResponse(JSON.stringify(
+        { error: 'السعر الإجمالي مفقود أو غير صالح' }
+      ), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8'
+        }
+      });
+    }
+    
+    // التحقق من بيانات العميل الأساسية
+    const { customer } = orderData;
+    if (!customer.name || !customer.email || !customer.phone) {
+      return new NextResponse(JSON.stringify(
+        { error: 'بيانات العميل غير مكتملة (الاسم، البريد الإلكتروني، الهاتف مطلوبة)' }
+      ), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8'
+        }
+      });
+    }
+    
+    // توليد رقم طلب فريد
     const date = new Date();
     const datePart = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
     const randomPart = Math.floor(1000 + Math.random() * 9000).toString();
     const orderNumber = `ORD-${datePart}-${randomPart}`;
     
+    console.log('إنشاء طلب جديد برقم:', orderNumber);
+    
     // إنشاء الطلب الجديد
     const newOrder = await (OrderModel as Model<any>).create({
       ...orderData,
       orderNumber,
-      status: 'pending'
+      status: 'pending',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+    
+    console.log('تم إنشاء الطلب بنجاح:', {
+      id: newOrder._id.toString(),
+      orderNumber: newOrder.orderNumber
     });
     
     return new NextResponse(JSON.stringify({ 
@@ -103,14 +167,55 @@ export async function POST(request: NextRequest) {
       orderNumber: newOrder.orderNumber,
       success: true 
     }), {
+      status: 201,
       headers: {
         'Content-Type': 'application/json; charset=utf-8'
       }
     });
   } catch (error) {
     console.error('خطأ في إنشاء طلب جديد:', error);
+    
+    // التحقق من نوع الخطأ ومعالجته
+    if (error instanceof mongoose.Error.ValidationError) {
+      // خطأ في التحقق من صحة البيانات
+      const validationErrors: string[] = [];
+      for (const field in error.errors) {
+        validationErrors.push(`${field}: ${error.errors[field].message}`);
+      }
+      
+      return new NextResponse(JSON.stringify(
+        { 
+          error: 'بيانات الطلب غير صالحة', 
+          details: validationErrors 
+        }
+      ), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8'
+        }
+      });
+    }
+    
+    // خطأ في تكرار البيانات
+    if (error.code === 11000) {
+      return new NextResponse(JSON.stringify(
+        { 
+          error: 'تم إنشاء هذا الطلب مسبقًا',
+          details: 'حقل مكرر: ' + JSON.stringify(error.keyValue || {})
+        }
+      ), {
+        status: 409,
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8'
+        }
+      });
+    }
+    
     return new NextResponse(JSON.stringify(
-      { error: 'حدث خطأ أثناء إنشاء طلب جديد' }
+      { 
+        error: 'حدث خطأ أثناء إنشاء طلب جديد',
+        details: error instanceof Error ? error.message : 'خطأ غير معروف'
+      }
     ), {
       status: 500,
       headers: {

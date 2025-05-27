@@ -104,106 +104,147 @@ export default function CheckoutPage() {
     setIsSubmitting(true);
     
     try {
+      // التحقق من وجود البيانات الأساسية
+      if (!formData.playerName || !formData.kingdomNumber || !formData.contactInfo) {
+        throw new Error('معلومات اللاعب غير مكتملة');
+      }
+      
+      // حساب السعر الإجمالي مرة أخرى للتأكد
+      const calculatedTotalPrice = cartItems.reduce((total, item) => 
+        total + (item.price * (item.quantity || 1)), 0);
+      
       // تحضير بيانات الطلب
       const orderData = {
         customer: {
           name: formData.playerName,
-          email: `${formData.playerName}@kingdom.com`, // بريد افتراضي
+          email: `${formData.playerName}@kingdom.com`,
           phone: formData.contactInfo,
           address: `Kingdom ${formData.kingdomNumber}`,
           city: `Kingdom ${formData.kingdomNumber}`,
-          notes: formData.notes,
+          notes: formData.notes || '',
           paymentMethod: formData.paymentMethod
         },
-        items: cartItems.map(item => ({
-          id: item.id,
-          name: item.name,
-          price: item.price,
-          icon: item.icon,
+        items: cartItems.map(item => {
+          // التأكد من صحة نوع الفئة
+          let validCategory = item.category || 'resources';
+          const validCategories = ['resources', 'bots', 'castle', 'events', 'packages'];
+          if (!validCategories.includes(validCategory)) {
+            validCategory = 'resources'; // استخدام قيمة افتراضية صحيحة
+          }
+          
+          return {
+            id: item.id || `item-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+            name: item.name || 'منتج',
+            price: item.price || 0,
+            icon: item.icon || '/images/default-icon.png',
           quantity: item.quantity || 1,
-          category: item.category
-        })),
-        totalPrice: totalPrice,
-        // الصور - سيتم التعامل معها بشكل منفصل
+            category: validCategory
+          };
+        }),
+        totalPrice: calculatedTotalPrice,
         images: {
-          hasCoordImage: !!coordImage,
-          hasNameImage: !!nameImage
+          coordImageUrl: null,
+          nameImageUrl: null
         }
       };
+
+      console.log('بيانات الطلب المراد إرسالها:', JSON.stringify(orderData, null, 2));
+
+      // التحقق من اكتمال البيانات الأساسية
+      if (!orderData.customer || !orderData.items || !orderData.items.length || orderData.totalPrice === undefined) {
+        throw new Error('بيانات الطلب غير مكتملة');
+      }
 
       // إرسال الطلب إلى API
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
         body: JSON.stringify(orderData)
       });
 
       // التحقق من نجاح الاستجابة
       if (!response.ok) {
-        throw new Error('حدث خطأ أثناء معالجة طلبك');
+        const errorText = await response.text();
+        console.error('نص الخطأ الأصلي:', errorText);
+        
+        let errorData: Record<string, any> = {};
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (e) {
+          console.error('فشل تحليل استجابة الخطأ كـ JSON:', e);
+        }
+        
+        console.error('خطأ في استجابة API:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData
+        });
+        
+        throw new Error(
+          errorData?.error || 
+          errorData?.message || 
+          `حدث خطأ أثناء معالجة طلبك (${response.status})`
+        );
       }
 
       const result = await response.json();
+      console.log('استجابة API:', result);
       
-      // طباعة نتيجة API للتشخيص
-      console.log('بيانات الطلب المستلمة:', result);
+      if (!result.success) {
+        throw new Error(result.error || 'فشل في إنشاء الطلب');
+      }
       
       // إذا كان هناك صورة، قم برفعها
       if (coordImage || nameImage) {
         try {
-          // إنشاء FormData لرفع الصور
-          const formImageData = new FormData();
-          
-          // التحقق من وجود معرف الطلب
-          const orderId = result.id || (result._id ? result._id.toString() : null);
+          const formData = new FormData();
+          const orderId = result.id;
           
           if (!orderId) {
-            console.error('لم يتم العثور على معرف الطلب في الاستجابة:', result);
             throw new Error('لم يتم العثور على معرف الطلب');
           }
           
-          // إضافة معرف الطلب إلى النموذج
-          formImageData.append('orderId', orderId);
+          console.log(`معرف الطلب المستخدم لرفع الصور: ${orderId}`);
+          
+          formData.append('orderId', orderId);
           
           if (coordImage) {
-            formImageData.append('coordImage', coordImage);
+            formData.append('coordImage', coordImage);
           }
           
           if (nameImage) {
-            formImageData.append('nameImage', nameImage);
+            formData.append('nameImage', nameImage);
           }
           
-          console.log('جاري رفع الصور للطلب:', orderId);
-          
-          // رفع الصور في نقطة نهاية منفصلة
           const uploadResponse = await fetch('/api/orders/upload-images', {
             method: 'POST',
-            body: formImageData
+            body: formData
           });
           
           if (!uploadResponse.ok) {
-            const errorText = await uploadResponse.text();
-            console.error('فشل رفع الصور:', errorText);
-            // نستمر بالمعالجة حتى لو فشل رفع الصور
-          } else {
-            const uploadResult = await uploadResponse.json();
-            console.log('تم رفع الصور بنجاح:', uploadResult);
+            const uploadError = await uploadResponse.json();
+            throw new Error(uploadError.error || 'حدث خطأ أثناء رفع الصور');
           }
+          
+          const uploadResult = await uploadResponse.json();
+          console.log('نتيجة رفع الصور:', uploadResult);
+          
         } catch (uploadError) {
-          console.error('خطأ أثناء رفع الصور:', uploadError);
-          // نستمر بالمعالجة حتى لو فشل رفع الصور
+          console.error('خطأ في رفع الصور:', uploadError);
+          alert('تم إنشاء الطلب، لكن هناك مشكلة في رفع الصور. سيتم التواصل معك قريبًا.');
         }
       }
       
-      // عرض رقم الطلب وإكمال الطلب
-      setOrderNumber(result.orderNumber || `ORD-${result.id}`);
+      setOrderNumber(result.orderNumber);
       setOrderComplete(true);
       clearCart();
+      
     } catch (error) {
       console.error('خطأ أثناء إرسال الطلب:', error);
-      alert('حدث خطأ أثناء إرسال الطلب. الرجاء المحاولة مرة أخرى.');
+      alert(error instanceof Error ? error.message : 'حدث خطأ أثناء إرسال الطلب. الرجاء المحاولة مرة أخرى.');
     } finally {
       setIsSubmitting(false);
     }
