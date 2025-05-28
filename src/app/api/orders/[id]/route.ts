@@ -52,7 +52,8 @@ export async function GET(
         totalPrice: orderObj.totalPrice,
         status: orderObj.status,
         createdAt: orderObj.createdAt,
-        updatedAt: orderObj.updatedAt
+        updatedAt: orderObj.updatedAt,
+        images: orderObj.images || {}
       }
     }), {
       headers: {

@@ -27,6 +27,10 @@ interface OrderDetails {
   totalPrice: number;
   status: string;
   createdAt: string;
+  images?: {
+    coordImageUrl?: string;
+    nameImageUrl?: string;
+  };
 }
 
 export default function OrderDetailsPage({ params }: { params: { locale: string; id: string } }) {
@@ -419,6 +423,65 @@ export default function OrderDetailsPage({ params }: { params: { locale: string;
               </table>
             </div>
           </div>
+          
+          {/* صور الطلب */}
+          {order.images && (order.images.coordImageUrl || order.images.nameImageUrl) && (
+            <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+              <h2 className="text-xl font-bold mb-4 pb-2 border-b">
+                {locale === 'ar' ? 'صور الطلب' : 
+                 locale === 'tr' ? 'Sipariş Resimleri' : 
+                 'Order Images'}
+              </h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {order.images.coordImageUrl && (
+                  <div>
+                    <p className="text-gray-600 mb-2">
+                      {locale === 'ar' ? 'صورة الإحداثيات' : 
+                       locale === 'tr' ? 'Koordinat Resmi' : 
+                       'Coordinates Image'}
+                    </p>
+                    <div className="border rounded-lg overflow-hidden">
+                      <img 
+                        src={order.images.coordImageUrl} 
+                        alt="صورة الإحداثيات"
+                        className="w-full h-auto object-contain"
+                        onError={(e) => {
+                          console.error('خطأ في تحميل صورة الإحداثيات');
+                          const target = e.target as HTMLImageElement;
+                          target.onerror = null;
+                          target.src = '/placeholder-image.jpg';
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+                
+                {order.images.nameImageUrl && (
+                  <div>
+                    <p className="text-gray-600 mb-2">
+                      {locale === 'ar' ? 'صورة الاسم' : 
+                       locale === 'tr' ? 'İsim Resmi' : 
+                       'Name Image'}
+                    </p>
+                    <div className="border rounded-lg overflow-hidden">
+                      <img 
+                        src={order.images.nameImageUrl} 
+                        alt="صورة الاسم"
+                        className="w-full h-auto object-contain"
+                        onError={(e) => {
+                          console.error('خطأ في تحميل صورة الاسم');
+                          const target = e.target as HTMLImageElement;
+                          target.onerror = null;
+                          target.src = '/placeholder-image.jpg';
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
           
           {/* زر العودة للصفحة الرئيسية */}
           <div className="text-center">
