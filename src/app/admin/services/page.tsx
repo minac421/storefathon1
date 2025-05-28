@@ -8,7 +8,7 @@ import { Sidebar } from '@/components/admin';
 // تعريف نوع للمنتج
 interface Product {
   id: string;
-  category: 'resources' | 'events' | 'bots' | 'castle' | 'charging' | 'shipping';
+  category: 'resources' | 'events' | 'bots' | 'castle' | 'charging';
   name: string;
   icon: string;
   image?: string;
@@ -111,20 +111,6 @@ export default function ServicesManagement() {
           allServices = [...allServices, ...charging];
         }
         
-        if (data.services.shipping) {
-          const shipping = data.services.shipping.map((item: any) => ({
-            id: item.id,
-            category: 'shipping',
-            name: item.name.ar,
-            icon: item.icon,
-            image: item.image || '',
-            price: item.price,
-            popular: item.popular || false,
-            description: item.description?.ar || ''
-          }));
-          allServices = [...allServices, ...shipping];
-        }
-        
         setProducts(allServices);
         setError(null);
       } catch (error) {
@@ -139,7 +125,7 @@ export default function ServicesManagement() {
   }, []);
   
   // تتبع تصنيف المنتجات النشط
-  const [activeCategory, setActiveCategory] = useState<'resources' | 'events' | 'bots' | 'castle' | 'charging' | 'shipping' | 'all'>('all');
+  const [activeCategory, setActiveCategory] = useState<'resources' | 'events' | 'bots' | 'castle' | 'charging' | 'all'>('all');
   
   // نموذج جديد/تعديل منتج
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -196,7 +182,6 @@ export default function ServicesManagement() {
     else if (category === 'events') defaultIcon = '🎮';
     else if (category === 'castle') defaultIcon = '🏰';
     else if (category === 'charging') defaultIcon = '💳';
-    else if (category === 'shipping') defaultIcon = '🚚';
     
     // إعادة تعيين حالة الصورة
     setProductImage(null);
@@ -229,10 +214,8 @@ export default function ServicesManagement() {
         return ['🏰', '🛡️', '⚔️', '🏯', '🔮', '🧪'];
       case 'charging':
         return ['💳', '💰', '🪙', '👑', '✨', '📅'];
-      case 'shipping':
-        return ['🚚', '📦', '🚛', '🚀', '✈️', '🛳️', '🛵'];
       default:
-        return ['🌾', '🤖', '🎮', '🏰', '💳', '🚚']; // أيقونات افتراضية
+        return ['🌾', '🤖', '🎮', '🏰', '💳']; // أيقونات افتراضية
     }
   };
   
@@ -527,20 +510,6 @@ export default function ServicesManagement() {
         allServices = [...allServices, ...charging];
       }
       
-      if (data.services.shipping) {
-        const shipping = data.services.shipping.map((item: any) => ({
-          id: item.id,
-          category: 'shipping',
-          name: item.name.ar,
-          icon: item.icon,
-          image: item.image || '',
-          price: item.price,
-          popular: item.popular || false,
-          description: item.description?.ar || ''
-        }));
-        allServices = [...allServices, ...shipping];
-      }
-      
       setProducts(allServices);
       alert(isEditMode ? 'تم تحديث المنتج بنجاح' : 'تمت إضافة المنتج بنجاح');
     } catch (error: any) {
@@ -671,14 +640,13 @@ export default function ServicesManagement() {
                     name="category"
                     value={productForm.category}
                     onChange={(e) => {
-                      const newCategory = e.target.value as 'resources' | 'bots' | 'castle' | 'events' | 'charging' | 'shipping';
+                      const newCategory = e.target.value as 'resources' | 'bots' | 'castle' | 'events' | 'charging';
                       // اختيار أيقونة افتراضية للفئة الجديدة
                       let defaultIcon = '🌾';
                       if (newCategory === 'bots') defaultIcon = '🤖';
                       else if (newCategory === 'events') defaultIcon = '🎮';
                       else if (newCategory === 'castle') defaultIcon = '🏰';
                       else if (newCategory === 'charging') defaultIcon = '💳';
-                      else if (newCategory === 'shipping') defaultIcon = '🚚';
                       
                       setProductForm(prev => ({ 
                         ...prev, 
@@ -695,7 +663,6 @@ export default function ServicesManagement() {
                     <option value="bots">البوتات</option>
                     <option value="castle">القلاع</option>
                     <option value="charging">الشحن</option>
-                    <option value="shipping">خدمات الشحن</option>
                   </select>
                   {isEditMode && (
                     <p className="text-xs text-gray-500 mt-1">لا يمكن تغيير القسم بعد الإنشاء</p>
@@ -744,8 +711,7 @@ export default function ServicesManagement() {
                     productForm.category === 'events' ? 'الأحداث' :
                     productForm.category === 'bots' ? 'البوتات' :
                     productForm.category === 'castle' ? 'القلاع' :
-                    productForm.category === 'charging' ? 'الشحن' :
-                    'خدمات الشحن'
+                    'الشحن'
                   }</p>
                   
                   <div className="grid grid-cols-8 gap-2 mb-2 border border-gray-300 rounded-lg p-2 bg-gray-50">
@@ -1026,16 +992,6 @@ export default function ServicesManagement() {
                 >
                   الشحن
                 </button>
-                <button
-                  onClick={() => setActiveCategory('shipping')}
-                  className={`px-4 py-2 rounded-lg font-medium ${
-                    activeCategory === 'shipping'
-                      ? 'bg-amber-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                >
-                  خدمات الشحن
-                </button>
               </div>
               
               <div className="flex space-x-2 rtl:space-x-reverse">
@@ -1119,8 +1075,7 @@ export default function ServicesManagement() {
                             product.category === 'events' ? 'الأحداث' :
                             product.category === 'bots' ? 'البوتات' :
                             product.category === 'castle' ? 'القلاع' :
-                            product.category === 'charging' ? 'الشحن' :
-                            'خدمات الشحن'
+                            'الشحن'
                           }
                         </td>
                         <td className="p-4 font-medium">{product.price} $</td>

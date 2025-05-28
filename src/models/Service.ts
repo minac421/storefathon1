@@ -10,13 +10,15 @@ interface Translation {
 // واجهة للخدمة
 export interface IService extends Document {
   id: string;
-  category: 'resources' | 'bots' | 'castle' | 'events';
+  category: 'resources' | 'bots' | 'castle' | 'events' | 'charging';
   name: Translation;
   description?: Translation;
   price: number;
   icon: string;
   iconAlt?: string;
   popular?: boolean;
+  image?: string;      // رابط الصورة الرئيسية
+  images?: string[];   // روابط صور إضافية
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,7 +35,7 @@ const ServiceSchema: Schema = new Schema(
     category: {
       type: String,
       required: [true, 'يجب تحديد فئة الخدمة'],
-      enum: ['resources', 'bots', 'castle', 'events']
+      enum: ['resources', 'bots', 'castle', 'events', 'charging']
     },
     name: {
       ar: { type: String, required: [true, 'يجب تحديد الاسم بالعربية'] },
@@ -60,6 +62,14 @@ const ServiceSchema: Schema = new Schema(
     popular: {
       type: Boolean,
       default: false
+    },
+    image: {
+      type: String,
+      default: null
+    },
+    images: {
+      type: [String],
+      default: []
     }
   },
   {

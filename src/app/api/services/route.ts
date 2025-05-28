@@ -47,6 +47,8 @@ export async function GET(request: NextRequest) {
         icon: service.icon,
         iconAlt: service.iconAlt,
         popular: service.popular || false,
+        image: service.image || null,
+        images: service.images || [],
         createdAt: service.createdAt,
         updatedAt: service.updatedAt
       };
