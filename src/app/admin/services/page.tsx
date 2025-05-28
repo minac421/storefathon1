@@ -8,9 +8,10 @@ import { Sidebar } from '@/components/admin';
 // تعريف نوع للمنتج
 interface Product {
   id: string;
-  category: 'resources' | 'events' | 'bots';
+  category: 'resources' | 'events' | 'bots' | 'castle' | 'charging' | 'shipping';
   name: string;
   icon: string;
+  image?: string;
   price: number;
   popular: boolean;
   description?: string;
@@ -46,6 +47,7 @@ export default function ServicesManagement() {
             category: 'resources',
             name: item.name.ar,
             icon: item.icon,
+            image: item.image || '',
             price: item.price,
             popular: item.popular || false,
             description: item.description?.ar || ''
@@ -59,6 +61,7 @@ export default function ServicesManagement() {
             category: 'bots',
             name: item.name.ar,
             icon: item.icon,
+            image: item.image || '',
             price: item.price,
             popular: item.popular || false,
             description: item.description?.ar || ''
@@ -72,6 +75,7 @@ export default function ServicesManagement() {
             category: 'castle',
             name: item.name.ar,
             icon: item.icon,
+            image: item.image || '',
             price: item.price,
             popular: item.popular || false,
             description: item.description?.ar || ''
@@ -85,11 +89,40 @@ export default function ServicesManagement() {
             category: 'events',
             name: item.name.ar,
             icon: item.icon,
+            image: item.image || '',
             price: item.price,
             popular: item.popular || false,
             description: item.description?.ar || ''
           }));
           allServices = [...allServices, ...events];
+        }
+        
+        if (data.services.charging) {
+          const charging = data.services.charging.map((item: any) => ({
+            id: item.id,
+            category: 'charging',
+            name: item.name.ar,
+            icon: item.icon,
+            image: item.image || '',
+            price: item.price,
+            popular: item.popular || false,
+            description: item.description?.ar || ''
+          }));
+          allServices = [...allServices, ...charging];
+        }
+        
+        if (data.services.shipping) {
+          const shipping = data.services.shipping.map((item: any) => ({
+            id: item.id,
+            category: 'shipping',
+            name: item.name.ar,
+            icon: item.icon,
+            image: item.image || '',
+            price: item.price,
+            popular: item.popular || false,
+            description: item.description?.ar || ''
+          }));
+          allServices = [...allServices, ...shipping];
         }
         
         setProducts(allServices);
@@ -106,7 +139,7 @@ export default function ServicesManagement() {
   }, []);
   
   // تتبع تصنيف المنتجات النشط
-  const [activeCategory, setActiveCategory] = useState<'resources' | 'events' | 'bots' | 'all'>('all');
+  const [activeCategory, setActiveCategory] = useState<'resources' | 'events' | 'bots' | 'castle' | 'charging' | 'shipping' | 'all'>('all');
   
   // نموذج جديد/تعديل منتج
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -116,6 +149,7 @@ export default function ServicesManagement() {
     category: 'resources',
     name: '',
     icon: '',
+    image: '',
     price: 0,
     popular: false,
     description: ''
@@ -123,6 +157,10 @@ export default function ServicesManagement() {
   
   // البحث في المنتجات
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // إضافة حالة لتخزين صورة المنتج
+  const [productImage, setProductImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
   
   // الحصول على المنتجات المفلترة
   const getFilteredProducts = () => {
@@ -148,11 +186,28 @@ export default function ServicesManagement() {
   // فتح نموذج إضافة منتج جديد
   const openAddProductModal = () => {
     setIsEditMode(false);
+    
+    // اختيار الفئة الافتراضية بناءً على التصفية الحالية
+    const category = activeCategory === 'all' ? 'resources' : activeCategory;
+    
+    // اختيار الأيقونة الافتراضية حسب الفئة
+    let defaultIcon = '🌾';
+    if (category === 'bots') defaultIcon = '🤖';
+    else if (category === 'events') defaultIcon = '🎮';
+    else if (category === 'castle') defaultIcon = '🏰';
+    else if (category === 'charging') defaultIcon = '💳';
+    else if (category === 'shipping') defaultIcon = '🚚';
+    
+    // إعادة تعيين حالة الصورة
+    setProductImage(null);
+    setImagePreview('');
+    
     setProductForm({
       id: '',
-      category: activeCategory === 'all' ? 'resources' : activeCategory,
+      category,
       name: '',
-      icon: '',
+      icon: defaultIcon,
+      image: '',
       price: 0,
       popular: false,
       description: ''
@@ -160,10 +215,54 @@ export default function ServicesManagement() {
     setIsModalOpen(true);
   };
   
+  // أيقونات المنتجات المتاحة حسب الفئة
+  const getCategoryIcons = (category: string): string[] => {
+    // أيقونات فريدة لكل فئة
+    switch(category) {
+      case 'resources':
+        return ['🌾', '🌲', '⛏️', '🥈', '🥇', '🍂', '🚜'];
+      case 'bots':
+        return ['🤖', '🎮', '🤖', '✨', '📅'];
+      case 'events':
+        return ['🎮', '🏆', '👑', '🎁', '✨'];
+      case 'castle':
+        return ['🏰', '🛡️', '⚔️', '🏯', '🔮', '🧪'];
+      case 'charging':
+        return ['💳', '💰', '🪙', '👑', '✨', '📅'];
+      case 'shipping':
+        return ['🚚', '📦', '🚛', '🚀', '✈️', '🛳️', '🛵'];
+      default:
+        return ['🌾', '🤖', '🎮', '🏰', '💳', '🚚']; // أيقونات افتراضية
+    }
+  };
+  
+  // أيقونات شائعة يمكن استخدامها مع أي فئة
+  const getCommonIcons = (): string[] => {
+    return ['🔄', '🏆', '✨', '📅', '👑', '💰', '🔮', '🧪'];
+  };
+  
+  // كل الأيقونات المتاحة
+  const getAllIcons = (): string[] => {
+    return [
+      '🌾', '🌲', '⛏️', '🥈', '🥇', '🍂', '🚜',  // موارد
+      '🤖', '🎮', '✨', '📅',                      // بوتات
+      '🏆', '👑', '🎁',                           // أحداث
+      '🏰', '🏯', '🛡️', '⚔️', '🔮', '🧪',        // قلاع
+      '💳', '💰', '🪙',                           // شحن
+      '🚚', '📦', '🚛', '🚀', '✈️', '🛳️', '🛵',   // خدمات الشحن
+      '🔄', '💎', '🏆', '✨', '📅', '💼'           // عام
+    ];
+  };
+  
   // فتح نموذج تعديل منتج
   const openEditProductModal = (product: Product) => {
     setIsEditMode(true);
     setProductForm({...product});
+    
+    // إعادة تعيين حالة الصورة للمنتج الحالي
+    setProductImage(null);
+    setImagePreview(product.image || '');
+    
     setIsModalOpen(true);
   };
   
@@ -176,38 +275,149 @@ export default function ServicesManagement() {
       setProductForm(prev => ({ ...prev, [name]: checked }));
     } else if (name === 'price') {
       setProductForm(prev => ({ ...prev, [name]: parseFloat(value) || 0 }));
+    } else if (name === 'id') {
+      // تنظيف المعرف: تحويل إلى أحرف صغيرة وإزالة المسافات والرموز الخاصة
+      const cleanId = value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
+      setProductForm(prev => ({ ...prev, [name]: cleanId }));
     } else {
       setProductForm(prev => ({ ...prev, [name]: value }));
     }
   };
   
+  // التعامل مع اختيار الصور
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // التحقق من حجم الملف (أقل من 2 ميجابايت)
+      if (file.size > 2 * 1024 * 1024) {
+        alert('حجم الصورة يتجاوز 2 ميجابايت. الرجاء اختيار صورة أصغر.');
+        return;
+      }
+      
+      // التحقق من نوع الملف
+      const fileType = file.type.toLowerCase();
+      if (!fileType.includes('jpeg') && !fileType.includes('jpg') && !fileType.includes('png') && !fileType.includes('webp')) {
+        alert('الرجاء اختيار صورة بتنسيق JPG أو PNG أو WEBP فقط.');
+        return;
+      }
+      
+      console.log('تم اختيار صورة:', file.name, 'الحجم:', (file.size / 1024).toFixed(2) + ' كيلوبايت');
+      setProductImage(file);
+      
+      // إنشاء معاينة للصورة
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setProductImage(null);
+      setImagePreview('');
+    }
+  };
+  
+  // التحقق من وجود معرف خدمة
+  const checkIdExists = (id: string, category: string): boolean => {
+    return products.some(product => 
+      product.id === id && product.category === category
+    );
+  };
+  
   // إرسال النموذج
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // التحقق من المعرف
+    const productId = productForm.id || productForm.name.toLowerCase().replace(/\s/g, '-');
+    
+    if (!isEditMode && checkIdExists(productId, productForm.category)) {
+      alert(`المعرف "${productId}" مستخدم بالفعل في فئة "${
+        productForm.category === 'resources' ? 'الموارد' :
+        productForm.category === 'events' ? 'الأحداث' :
+        productForm.category === 'bots' ? 'البوتات' :
+        productForm.category === 'castle' ? 'القلاع' :
+        productForm.category === 'charging' ? 'الشحن' :
+        'خدمات الشحن'
+      }". الرجاء استخدام معرف آخر.`);
+      return;
+    }
+    
     setLoading(true);
     
     try {
-      // تحضير البيانات للإرسال بالتنسيق الصحيح
-      const productId = productForm.id || productForm.name.toLowerCase().replace(/\s/g, '-');
+          // رفع الصورة إذا تم اختيارها
+    let imageUrl = productForm.image || '';
+    
+    if (productImage) {
+      console.log('بدء رفع الصورة...');
       
-      const serviceData = {
-        id: productId,
-        category: productForm.category,
-        name: {
-          ar: productForm.name,
-          en: productForm.name, // يمكن تعديله لاحقاً لدعم اللغة الإنجليزية
-          tr: productForm.name  // يمكن تعديله لاحقاً لدعم اللغة التركية
-        },
-        price: productForm.price,
-        icon: productForm.icon,
-        iconAlt: productForm.name,
-        popular: productForm.popular,
-        description: productForm.description ? {
-          ar: productForm.description,
-          en: productForm.description,
-          tr: productForm.description
-        } : undefined
-      };
+      try {
+        const formData = new FormData();
+        formData.append('file', productImage);
+        formData.append('category', productForm.category);
+        formData.append('id', productId);
+        
+        console.log('إرسال بيانات الصورة:', productImage.name, 'الفئة:', productForm.category, 'المعرف:', productId);
+        
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        });
+        
+        console.log('استجابة رفع الصورة - الحالة:', uploadResponse.status);
+        
+        if (!uploadResponse.ok) {
+          const errorText = await uploadResponse.text();
+          console.error('خطأ في استجابة رفع الصورة:', errorText);
+          throw new Error(errorText || 'حدث خطأ أثناء رفع الصورة');
+        }
+        
+        const uploadData = await uploadResponse.json();
+        console.log('تم رفع الصورة بنجاح، المسار:', uploadData.url);
+        imageUrl = uploadData.url;
+      } catch (error) {
+        console.error('خطأ أثناء رفع الصورة:', error);
+        alert('حدث خطأ أثناء رفع الصورة، يرجى المحاولة مرة أخرى');
+        setLoading(false);
+        return;
+      }
+    }
+      
+      // تحضير البيانات للإرسال بالتنسيق الصحيح
+      const finalProductId = productId;
+      
+      console.log('إرسال بيانات المنتج:', {
+        فئة: productForm.category,
+        معرف: finalProductId,
+        اسم: productForm.name,
+        صورة: imageUrl
+      });
+      
+          console.log('تجهيز بيانات المنتج للإرسال مع الصورة:', imageUrl);
+    
+    const serviceData = {
+      id: finalProductId,
+      category: productForm.category,
+      name: {
+        ar: productForm.name,
+        en: productForm.name,
+        tr: productForm.name
+      },
+      price: productForm.price,
+      icon: productForm.icon || '💳',
+      iconAlt: productForm.name,
+      popular: productForm.popular,
+      image: imageUrl, // مسار الصورة بعد الرفع
+      description: productForm.description ? {
+        ar: productForm.description,
+        en: productForm.description,
+        tr: productForm.description
+      } : undefined
+    };
+    
+    console.log('بيانات المنتج النهائية للإرسال:', JSON.stringify(serviceData));
+      
+      console.log('البيانات المجهزة للإرسال:', JSON.stringify(serviceData));
       
       let response;
       
@@ -233,12 +443,16 @@ export default function ServicesManagement() {
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'حدث خطأ أثناء حفظ البيانات');
+        console.error('خطأ في استجابة API:', errorData);
+        throw new Error(errorData.error || errorData.message || 'حدث خطأ أثناء حفظ البيانات');
       }
       
       // إعادة تحميل الخدمات
+      console.log('جاري إعادة تحميل الخدمات بعد الحفظ...');
       const fetchResponse = await fetch('/api/services');
       const data = await fetchResponse.json();
+      
+      console.log('بيانات الخدمات المستلمة:', data);
       
       // تحويل البيانات
       let allServices: Product[] = [];
@@ -249,6 +463,7 @@ export default function ServicesManagement() {
           category: 'resources',
           name: item.name.ar,
           icon: item.icon,
+          image: item.image || '',
           price: item.price,
           popular: item.popular || false,
           description: item.description?.ar || ''
@@ -262,6 +477,7 @@ export default function ServicesManagement() {
           category: 'bots',
           name: item.name.ar,
           icon: item.icon,
+          image: item.image || '',
           price: item.price,
           popular: item.popular || false,
           description: item.description?.ar || ''
@@ -275,6 +491,7 @@ export default function ServicesManagement() {
           category: 'castle',
           name: item.name.ar,
           icon: item.icon,
+          image: item.image || '',
           price: item.price,
           popular: item.popular || false,
           description: item.description?.ar || ''
@@ -288,11 +505,40 @@ export default function ServicesManagement() {
           category: 'events',
           name: item.name.ar,
           icon: item.icon,
+          image: item.image || '',
           price: item.price,
           popular: item.popular || false,
           description: item.description?.ar || ''
         }));
         allServices = [...allServices, ...events];
+      }
+      
+      if (data.services.charging) {
+        const charging = data.services.charging.map((item: any) => ({
+          id: item.id,
+          category: 'charging',
+          name: item.name.ar,
+          icon: item.icon,
+          image: item.image || '',
+          price: item.price,
+          popular: item.popular || false,
+          description: item.description?.ar || ''
+        }));
+        allServices = [...allServices, ...charging];
+      }
+      
+      if (data.services.shipping) {
+        const shipping = data.services.shipping.map((item: any) => ({
+          id: item.id,
+          category: 'shipping',
+          name: item.name.ar,
+          icon: item.icon,
+          image: item.image || '',
+          price: item.price,
+          popular: item.popular || false,
+          description: item.description?.ar || ''
+        }));
+        allServices = [...allServices, ...shipping];
       }
       
       setProducts(allServices);
@@ -339,12 +585,14 @@ export default function ServicesManagement() {
     }
   };
   
-  // أيقونات المنتجات المتاحة
-  const availableIcons = ['🌾', '🌲', '⛏️', '🥈', '🥇', '📅', '✨', '🍂', '🚜', '🛡️', '⚔️', '🔄', '💎', '🏆', '🧪', '🔮'];
-  
   // نموذج المنتج
   const renderProductModal = () => {
     if (!isModalOpen) return null;
+    
+    // الحصول على أيقونات الفئة المحددة
+    const categoryIcons = getCategoryIcons(productForm.category);
+    const commonIcons = getCommonIcons();
+    const allIcons = getAllIcons();
     
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -371,19 +619,48 @@ export default function ServicesManagement() {
                   <label htmlFor="id" className="block mb-1 text-gray-700">
                     المعرف (بالإنجليزية)
                   </label>
-                  <input
-                    type="text"
-                    id="id"
-                    name="id"
-                    value={productForm.id}
-                    onChange={handleFormChange}
-                    className="w-full p-2 border border-gray-300 rounded-lg"
-                    placeholder="مثال: gold"
-                    required={!isEditMode}
-                    readOnly={isEditMode}
-                  />
-                  {isEditMode && (
+                  <div className="relative">
+                    <input
+                      type="text"
+                      id="id"
+                      name="id"
+                      value={productForm.id}
+                      onChange={handleFormChange}
+                      className={`w-full p-2 border ${
+                        !isEditMode && productForm.id && checkIdExists(productForm.id, productForm.category)
+                          ? 'border-red-500'
+                          : !isEditMode && productForm.id
+                            ? 'border-green-500'
+                            : 'border-gray-300'
+                      } rounded-lg`}
+                      placeholder="مثال: gold"
+                      required={!isEditMode}
+                      readOnly={isEditMode}
+                    />
+                    {!isEditMode && productForm.id && (
+                      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        {checkIdExists(productForm.id, productForm.category) ? (
+                          <span className="text-red-500">❌</span>
+                        ) : (
+                          <span className="text-green-500">✓</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {isEditMode ? (
                     <p className="text-xs text-gray-500 mt-1">لا يمكن تغيير المعرف بعد الإنشاء</p>
+                  ) : (
+                    <p className="text-xs mt-1 rtl:text-right">
+                      {productForm.id ? (
+                        checkIdExists(productForm.id, productForm.category) ? (
+                          <span className="text-red-500">المعرف مستخدم بالفعل، الرجاء اختيار معرف آخر</span>
+                        ) : (
+                          <span className="text-green-500">المعرف متاح</span>
+                        )
+                      ) : (
+                        <span className="text-gray-500">أدخل معرفًا فريدًا للمنتج (حروف إنجليزية وأرقام وشرطات فقط)</span>
+                      )}
+                    </p>
                   )}
                 </div>
                 
@@ -393,14 +670,32 @@ export default function ServicesManagement() {
                     id="category"
                     name="category"
                     value={productForm.category}
-                    onChange={handleFormChange}
+                    onChange={(e) => {
+                      const newCategory = e.target.value as 'resources' | 'bots' | 'castle' | 'events' | 'charging' | 'shipping';
+                      // اختيار أيقونة افتراضية للفئة الجديدة
+                      let defaultIcon = '🌾';
+                      if (newCategory === 'bots') defaultIcon = '🤖';
+                      else if (newCategory === 'events') defaultIcon = '🎮';
+                      else if (newCategory === 'castle') defaultIcon = '🏰';
+                      else if (newCategory === 'charging') defaultIcon = '💳';
+                      else if (newCategory === 'shipping') defaultIcon = '🚚';
+                      
+                      setProductForm(prev => ({ 
+                        ...prev, 
+                        category: newCategory,
+                        icon: defaultIcon // تحديث الأيقونة تلقائياً
+                      }));
+                    }}
                     className="w-full p-2 border border-gray-300 rounded-lg"
                     required
                     disabled={isEditMode}
                   >
                     <option value="resources">الموارد</option>
                     <option value="events">الأحداث</option>
-                    <option value="bots">الروبوتات</option>
+                    <option value="bots">البوتات</option>
+                    <option value="castle">القلاع</option>
+                    <option value="charging">الشحن</option>
+                    <option value="shipping">خدمات الشحن</option>
                   </select>
                   {isEditMode && (
                     <p className="text-xs text-gray-500 mt-1">لا يمكن تغيير القسم بعد الإنشاء</p>
@@ -443,10 +738,20 @@ export default function ServicesManagement() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="icon" className="block mb-1 text-gray-700">الأيقونة</label>
+                  
+                  <p className="text-xs text-gray-500 mb-2">أيقونات مقترحة لفئة {
+                    productForm.category === 'resources' ? 'الموارد' :
+                    productForm.category === 'events' ? 'الأحداث' :
+                    productForm.category === 'bots' ? 'البوتات' :
+                    productForm.category === 'castle' ? 'القلاع' :
+                    productForm.category === 'charging' ? 'الشحن' :
+                    'خدمات الشحن'
+                  }</p>
+                  
                   <div className="grid grid-cols-8 gap-2 mb-2 border border-gray-300 rounded-lg p-2 bg-gray-50">
-                    {availableIcons.map(icon => (
+                    {categoryIcons.map((icon, index) => (
                       <button
-                        key={icon}
+                        key={`cat-${index}`}
                         type="button"
                         className={`text-2xl p-2 rounded ${
                           productForm.icon === icon
@@ -459,6 +764,43 @@ export default function ServicesManagement() {
                       </button>
                     ))}
                   </div>
+                  
+                  <p className="text-xs text-gray-500 mb-2">أيقونات شائعة</p>
+                  <div className="grid grid-cols-8 gap-2 mb-2 border border-gray-300 rounded-lg p-2 bg-gray-50">
+                    {commonIcons.map((icon, index) => (
+                      <button
+                        key={`common-${index}`}
+                        type="button"
+                        className={`text-2xl p-2 rounded ${
+                          productForm.icon === icon
+                            ? 'bg-amber-200 border-2 border-amber-500'
+                            : 'bg-white border border-gray-200 hover:bg-gray-100'
+                        }`}
+                        onClick={() => setProductForm(prev => ({ ...prev, icon }))}
+                      >
+                        {icon}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  <p className="text-xs text-gray-500 mb-2">كل الأيقونات المتاحة</p>
+                  <div className="grid grid-cols-8 gap-2 mb-2 border border-gray-300 rounded-lg p-2 bg-gray-50">
+                    {allIcons.map((icon, index) => (
+                      <button
+                        key={`all-${index}`}
+                        type="button"
+                        className={`text-2xl p-2 rounded ${
+                          productForm.icon === icon
+                            ? 'bg-amber-200 border-2 border-amber-500'
+                            : 'bg-white border border-gray-200 hover:bg-gray-100'
+                        }`}
+                        onClick={() => setProductForm(prev => ({ ...prev, icon }))}
+                      >
+                        {icon}
+                      </button>
+                    ))}
+                  </div>
+                  
                   <div className="border border-gray-300 rounded-lg p-4 text-center">
                     <span className="text-4xl">
                       {productForm.icon || '⬆️ اختر أيقونة'}
@@ -478,6 +820,84 @@ export default function ServicesManagement() {
                       />
                       <span className="mr-2 text-gray-700">منتج شائع (سيتم تمييزه)</span>
                     </label>
+                  </div>
+                </div>
+              </div>
+              
+              {/* رفع صورة المنتج */}
+              <div>
+                <label htmlFor="productImage" className="block mb-1 text-gray-700">صورة المنتج</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <input
+                      type="file"
+                      id="productImage"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="productImage"
+                      className="flex flex-col items-center justify-center w-full h-40 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
+                    >
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <svg
+                          className="w-10 h-10 mb-3 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                          ></path>
+                        </svg>
+                        <p className="mb-2 text-sm text-gray-500 text-center">
+                          <span className="font-semibold">اضغط لرفع صورة</span> أو اسحب وأفلت
+                        </p>
+                        <p className="text-xs text-gray-500">PNG، JPG أو WEBP (الحد الأقصى: 2 ميجابايت)</p>
+                      </div>
+                    </label>
+                  </div>
+                  
+                  <div className="flex items-center justify-center">
+                    {(imagePreview || productForm.image) ? (
+                      <div className="relative w-full h-40 bg-gray-100 rounded-lg overflow-hidden">
+                        <img
+                          src={imagePreview || productForm.image}
+                          alt="معاينة الصورة"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            console.error('خطأ في تحميل الصورة:', e);
+                            const target = e.target as HTMLImageElement;
+                            target.onerror = null; // منع التكرار
+                            target.src = '/placeholder-image.jpg'; // صورة بديلة
+                            alert('فشل تحميل الصورة. يرجى التحقق من المسار: ' + (imagePreview || productForm.image));
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProductImage(null);
+                            setImagePreview('');
+                            setProductForm(prev => ({ ...prev, image: '' }));
+                          }}
+                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                          title="حذف الصورة"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="w-full h-40 flex items-center justify-center border border-gray-200 rounded-lg bg-gray-50">
+                        <p className="text-gray-400 text-center">لم يتم اختيار صورة</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -584,7 +1004,37 @@ export default function ServicesManagement() {
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                   }`}
                 >
-                  الروبوتات
+                  البوتات
+                </button>
+                <button
+                  onClick={() => setActiveCategory('castle')}
+                  className={`px-4 py-2 rounded-lg font-medium ${
+                    activeCategory === 'castle'
+                      ? 'bg-amber-600 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  القلاع
+                </button>
+                <button
+                  onClick={() => setActiveCategory('charging')}
+                  className={`px-4 py-2 rounded-lg font-medium ${
+                    activeCategory === 'charging'
+                      ? 'bg-amber-600 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  الشحن
+                </button>
+                <button
+                  onClick={() => setActiveCategory('shipping')}
+                  className={`px-4 py-2 rounded-lg font-medium ${
+                    activeCategory === 'shipping'
+                      ? 'bg-amber-600 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  خدمات الشحن
                 </button>
               </div>
               
@@ -634,7 +1084,23 @@ export default function ServicesManagement() {
                       <tr key={`${product.category}-${product.id}`} className="hover:bg-gray-50">
                         <td className="p-4">
                           <div className="flex items-center">
-                            <span className="text-2xl ml-3">{product.icon}</span>
+                            {product.image ? (
+                              <div className="w-12 h-12 rounded-lg ml-3 overflow-hidden bg-gray-100 flex-shrink-0">
+                                <img 
+                                  src={product.image} 
+                                  alt={product.name} 
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    console.error('خطأ في تحميل صورة المنتج:', product.image);
+                                    const target = e.target as HTMLImageElement;
+                                    target.onerror = null;
+                                    target.src = '/placeholder-image.jpg';
+                                  }}
+                                />
+                              </div>
+                            ) : (
+                              <span className="text-2xl ml-3">{product.icon}</span>
+                            )}
                             <div>
                               <h4 className="font-medium">{product.name}</h4>
                               {product.description && (
@@ -651,7 +1117,10 @@ export default function ServicesManagement() {
                           {
                             product.category === 'resources' ? 'الموارد' :
                             product.category === 'events' ? 'الأحداث' :
-                            'الروبوتات'
+                            product.category === 'bots' ? 'البوتات' :
+                            product.category === 'castle' ? 'القلاع' :
+                            product.category === 'charging' ? 'الشحن' :
+                            'خدمات الشحن'
                           }
                         </td>
                         <td className="p-4 font-medium">{product.price} $</td>
