@@ -41,10 +41,12 @@ export default function Header({ locale }: HeaderProps) {
   // Navigation items
   const navItems = [
     { key: 'home', label: t?.header?.home || 'الرئيسية', href: '/' },
-    { key: 'services', label: t?.header?.services || 'الخدمات', href: '/services' },
     { key: 'castles', label: t?.header?.castles || 'القلاع', href: '/castles' },
-    { key: 'blog', label: 'المدونة', href: '/blog' },
-    { key: 'bots', label: t?.header?.bots || 'الروبوتات', href: '/bots' },
+    { key: 'blog', label: 'شارك بطولاتك', href: '/blog' },
+    { key: 'castle-valuation', label: 'تقييم القلعة', href: '/castle-valuation' },
+    { key: 'data-collector', label: 'جمع البيانات', href: '/castle-valuation/data-collector' },
+    { key: 'services', label: t?.header?.services || 'الخدمات', href: '/services' },
+    { key: 'bots', label: t?.header?.bots || 'البوتات', href: '/services#bots' },
     { key: 'events', label: t?.header?.events || 'الأحداث', href: '/events' },
     { key: 'custom-order', label: t?.header?.customOrder || 'طلب مخصص', href: '/custom-order' },
     { key: 'admin', label: 'لوحة التحكم', href: '/admin' },

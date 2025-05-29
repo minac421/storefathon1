@@ -102,16 +102,16 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ isOpen, onClose, castle }) 
               </div>
               
               {/* ميزات القلعة */}
-              <div className="bg-amber-50 p-4 rounded-lg mb-5">
+              <div className="bg-amber-50 p-4 rounded-lg mb-5 border border-amber-200">
                 <h3 className="text-lg font-semibold mb-3 flex items-center">
-                  <span className="text-amber-600 mr-2">✨</span>
+                  <span className="text-amber-600 mr-2">👑</span>
                   ميزات القلعة
                 </h3>
-                <ul className="space-y-2">
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {castle.features.map((feature, idx) => (
-                    <li key={`modal-feature-${castle.id}-${idx}`} className="flex items-center gap-2">
-                      <div className="text-amber-600">•</div>
-                      <div>{feature}</div>
+                    <li key={`modal-feature-${castle.id}-${idx}`} className="flex items-center gap-2 golden-feature-bg">
+                      <span className="text-amber-600 ml-1">✨</span>
+                      <span className="golden-feature">{feature}</span>
                     </li>
                   ))}
                 </ul>
@@ -323,7 +323,18 @@ export default function CastlesPage() {
       
       <div className="container mx-auto px-4 py-16">
         <h1 className="text-4xl font-bold mb-2 text-blue-800 drop-shadow-md">{getLocalizedText('castles')}</h1>
-        <p className="text-gray-800 text-lg mb-12 bg-white bg-opacity-50 inline-block px-4 py-2 rounded-lg shadow-sm">اختر القلعة المناسبة لاحتياجاتك في لعبة الفاتحون</p>
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-12">
+          <p className="text-gray-800 text-lg bg-white bg-opacity-50 inline-block px-4 py-2 rounded-lg shadow-sm">اختر القلعة المناسبة لاحتياجاتك في لعبة الفاتحون</p>
+          <Link href="/castle-valuation" className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all hover:scale-105 shadow-lg inline-flex items-center gap-2">
+            <span className="relative px-2 py-1">
+              <span className="absolute -top-3 -right-3 bg-yellow-400 text-xs text-purple-900 px-1 rounded-full font-bold">جديد!</span>
+              تقييم قلعتك
+            </span>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+          </Link>
+        </div>
         
         {/* قسم التصفية والفرز */}
         <div className="p-6 rounded-xl shadow-md mb-8 relative overflow-hidden">
@@ -486,16 +497,21 @@ export default function CastlesPage() {
                   <p className="text-gray-600 text-sm">{castleItem.description}</p>
                   
                   {/* ميزات القلعة */}
-                  <div className="mt-3 border-t border-gray-200 pt-3">
-                    <h4 className="text-xs font-medium text-gray-500 mb-2">الميزات:</h4>
-                    <ul className="grid grid-cols-2 gap-1">
-                      {castleItem.features?.slice(0, 4).map((feature, idx) => (
-                        <li key={`${castleItem.id}-feature-${idx}`} className="text-xs flex items-center">
-                          <span className="text-amber-600 ml-1">•</span>
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
+                  <div className="mt-2 border-t border-gray-200 pt-2">
+                    <h4 className="text-xs font-bold text-amber-700 mb-1 flex items-center">
+                      <span className="text-amber-500 mr-1">✨</span>
+                      الميزات:
+                    </h4>
+                    <div className="feature-box">
+                      <ul className="grid grid-cols-2 gap-1">
+                        {castleItem.features?.slice(0, 4).map((feature, idx) => (
+                          <li key={`${castleItem.id}-feature-${idx}`} className="text-xs flex items-center golden-feature-bg">
+                            <span className="text-amber-600 ml-1">👑</span>
+                            <span className="golden-feature">{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
                 </div>
                 

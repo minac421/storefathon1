@@ -3,9 +3,12 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-}
-
-@theme inline {
+  --gold-color: #FFD700;
+  --gold-shadow: rgba(255, 215, 0, 0.5);
+  --gold-light: #FFF3B0;
+  --gold-dark: #B38728;
+  
+  /* نقل المتغيرات من @theme inline إلى :root */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -33,4 +36,83 @@ body {
 
 .animate-fade-in {
   animation: fade-in 0.3s ease-out forwards;
+}
+
+/* تنسيق الميزات باللون الذهبي */
+.golden-feature {
+  color: var(--gold-dark);
+  font-weight: 700;
+  text-shadow: 0 0 2px var(--gold-shadow);
+  position: relative;
+  transition: all 0.3s ease;
+  background-image: linear-gradient(to right, var(--gold-dark), var(--gold-color), var(--gold-dark));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: 0.2px;
+  font-size: 0.75rem;
+}
+
+/* تأثير توهج ذهبي عند التحويم */
+.golden-feature:hover {
+  text-shadow: 0 0 5px var(--gold-shadow), 0 0 10px var(--gold-shadow);
+  animation: shimmer 1.5s infinite;
+  transform: scale(1.03);
+}
+
+/* خلفية متدرجة ذهبية للميزات */
+.golden-feature-bg {
+  background: linear-gradient(135deg, #fcf4df, #FFD700, #fcf4df);
+  background-size: 200% auto;
+  animation: goldGradient 8s ease infinite;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid rgba(179, 135, 40, 0.3);
+  box-shadow: 0 0 3px rgba(255, 215, 0, 0.2);
+  transition: all 0.3s ease;
+  margin-bottom: 2px;
+}
+
+.golden-feature-bg:hover {
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+  transform: translateY(-1px);
+}
+
+/* خلفية للميزات في الصفحة الرئيسية */
+.feature-box {
+  background-color: rgba(255, 215, 0, 0.08);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: 6px;
+  padding: 6px;
+  margin-bottom: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-box::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--gold-color), transparent);
+  animation: goldScanline 3s linear infinite;
+}
+
+@keyframes goldScanline {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes goldGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes shimmer {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
 }
