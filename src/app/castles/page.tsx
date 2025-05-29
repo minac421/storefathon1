@@ -325,15 +325,6 @@ export default function CastlesPage() {
         <h1 className="text-4xl font-bold mb-2 text-blue-800 drop-shadow-md">{getLocalizedText('castles')}</h1>
         <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-12">
           <p className="text-gray-800 text-lg bg-white bg-opacity-50 inline-block px-4 py-2 rounded-lg shadow-sm">اختر القلعة المناسبة لاحتياجاتك في لعبة الفاتحون</p>
-          <Link href="/castle-valuation" className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all hover:scale-105 shadow-lg inline-flex items-center gap-2">
-            <span className="relative px-2 py-1">
-              <span className="absolute -top-3 -right-3 bg-yellow-400 text-xs text-purple-900 px-1 rounded-full font-bold">جديد!</span>
-              تقييم قلعتك
-            </span>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-            </svg>
-          </Link>
         </div>
         
         {/* قسم التصفية والفرز */}
