@@ -222,13 +222,111 @@ const DirectGallery = () => {
       )}
 
       <div className="max-w-[95%] mx-auto">
-        {/* صفوف المعرض */}
-        {renderGalleryRow(galleryImages.slice(0, 15), 1, false, 'fast')}
-        {renderGalleryRow(galleryImages.slice(15, 30), 2, true, 'fast')}
-        {renderGalleryRow(galleryImages.slice(30, 45), 3, false, 'medium')}
-        {renderGalleryRow(galleryImages.slice(45, 60), 4, true, 'medium')}
-        {renderGalleryRow(galleryImages.slice(60, 75), 5, false, 'slow')}
-        {renderGalleryRow(galleryImages.slice(75, galleryImages.length), 6, true, 'slow')}
+        {/* ملاحظة: نستخدم تقسيم مختلف للصور لعرض جميع الـ 109 صورة */}
+        {renderGalleryRow(galleryImages.slice(0, 18), 1, false, 'fast')}
+        {renderGalleryRow(galleryImages.slice(18, 36), 2, true, 'fast')}
+        {renderGalleryRow(galleryImages.slice(36, 54), 3, false, 'medium')}
+        {renderGalleryRow(galleryImages.slice(54, 72), 4, true, 'medium')}
+        {renderGalleryRow(galleryImages.slice(72, 90), 5, false, 'slow')}
+        {renderGalleryRow(galleryImages.slice(90, galleryImages.length), 6, true, 'slow')}
+
+        {/* إضافة أنماط CSS الضرورية للحركة */}
+        <style jsx global>{`
+          @keyframes scrollXFast {
+            0% {
+              transform: translateX(0);
+            }
+            100% {
+              transform: translateX(-50%);
+            }
+          }
+          
+          @keyframes scrollXReverseFast {
+            0% {
+              transform: translateX(-50%);
+            }
+            100% {
+              transform: translateX(0);
+            }
+          }
+          
+          @keyframes scrollXMedium {
+            0% {
+              transform: translateX(0);
+            }
+            100% {
+              transform: translateX(-50%);
+            }
+          }
+          
+          @keyframes scrollXReverseMedium {
+            0% {
+              transform: translateX(-50%);
+            }
+            100% {
+              transform: translateX(0);
+            }
+          }
+          
+          @keyframes scrollXSlow {
+            0% {
+              transform: translateX(0);
+            }
+            100% {
+              transform: translateX(-50%);
+            }
+          }
+          
+          @keyframes scrollXReverseSlow {
+            0% {
+              transform: translateX(-50%);
+            }
+            100% {
+              transform: translateX(0);
+            }
+          }
+          
+          @keyframes scrollXVerySlow {
+            0% {
+              transform: translateX(0);
+            }
+            100% {
+              transform: translateX(-50%);
+            }
+          }
+          
+          .animate-scroll-x-fast {
+            animation: scrollXFast 30s linear infinite;
+          }
+          
+          .animate-scroll-x-reverse-fast {
+            animation: scrollXReverseFast 35s linear infinite;
+          }
+          
+          .animate-scroll-x-medium {
+            animation: scrollXMedium 45s linear infinite;
+          }
+          
+          .animate-scroll-x-reverse-medium {
+            animation: scrollXReverseMedium 50s linear infinite;
+          }
+          
+          .animate-scroll-x-slow {
+            animation: scrollXSlow 55s linear infinite;
+          }
+          
+          .animate-scroll-x-reverse-slow {
+            animation: scrollXReverseSlow 60s linear infinite;
+          }
+          
+          .animate-scroll-x-very-slow {
+            animation: scrollXVerySlow 65s linear infinite;
+          }
+          
+          .hover\\:pause-animation:hover {
+            animation-play-state: paused;
+          }
+        `}</style>
       </div>
     </div>
   );
