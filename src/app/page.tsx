@@ -35,6 +35,16 @@ const featuredServices = [
     },
     image: "/images/services/bots.jpg",
     url: "/bots"
+  },
+  {
+    id: 4,
+    title: {
+      ar: "معرض الصور",
+      en: "Photo Gallery",
+      tr: "Fotoğraf Galerisi"
+    },
+    image: "/images/gallery/WhatsApp Image 2025-05-29 at 5.49.54 PM.jpeg",
+    url: "/gallery"
   }
 ];
 
@@ -86,29 +96,53 @@ export default function Home() {
           <div className="absolute inset-0 bg-black/30 md:bg-black/20"></div>
         </div>
 
+        {/* زر آراء العملاء على جانب الشاشة */}
+        <div className="absolute left-8 top-1/2 transform -translate-y-1/2 z-30">
+          <Link 
+            href={`/gallery`} 
+            className="group relative overflow-hidden rounded-xl transition-all duration-300 hover:shadow-2xl block"
+          >
+            <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-[2px] rounded-xl">
+              <div className="bg-black/80 backdrop-blur-sm rounded-xl px-6 py-3 text-white">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-bold">آراء العملاء</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 transform transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-30 blur-lg transition-all duration-500 group-hover:opacity-60"></div>
+          </Link>
+        </div>
+
         <div className="container mx-auto px-6 relative z-20">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight text-white drop-shadow-lg">امتلك القوة في عالم الفاتحون</h1>
             <p className="text-xl md:text-2xl mb-10 text-white drop-shadow-md">خدمات متكاملة للارتقاء بتجربتك في اللعبة</p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link 
-                href={`/services`} 
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg text-lg font-bold transition-all hover:scale-105 shadow-lg"
-              >
-                استكشف خدماتنا
-              </Link>
-              <Link 
-                href={`/castles`} 
-                className="bg-amber-600 hover:bg-amber-700 text-white px-8 py-4 rounded-lg text-lg font-bold transition-all hover:scale-105 shadow-lg"
-              >
-                استعرض القلاع
-              </Link>
-              <Link 
-                href={`/blog`} 
-                className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-lg text-lg font-bold transition-all hover:scale-105 shadow-lg"
-              >
-                شارك بطولاتك
-              </Link>
+            
+            {/* أزرار الصفحة الرئيسية */}
+            <div className="flex justify-center items-center flex-wrap">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link 
+                  href={`/services`} 
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg text-lg font-bold transition-all hover:scale-105 shadow-lg"
+                >
+                  استكشف خدماتنا
+                </Link>
+                <Link 
+                  href={`/castles`} 
+                  className="bg-amber-600 hover:bg-amber-700 text-white px-8 py-4 rounded-lg text-lg font-bold transition-all hover:scale-105 shadow-lg"
+                >
+                  استعرض القلاع
+                </Link>
+                <Link 
+                  href={`/blog`} 
+                  className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-lg text-lg font-bold transition-all hover:scale-105 shadow-lg"
+                >
+                  شارك بطولاتك
+                </Link>
+              </div>
             </div>
           </div>
         </div>
