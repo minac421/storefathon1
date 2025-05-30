@@ -149,8 +149,8 @@ const DirectGallery = () => {
       : `animate-scroll-x-${speed}`;
     
     return (
-      <div className="overflow-hidden mb-1">
-        <div className={`flex gap-1 hover:pause-animation ${loaded ? animationClass : 'opacity-0'}`}>
+      <div className="overflow-hidden mb-1 w-full">
+        <div className={`flex gap-1 hover:pause-animation ${loaded ? animationClass : 'opacity-0'} w-full`}>
           {images.map((src, index) => (
             <div 
               key={`grid${rowIndex}-${index}`} 
@@ -221,7 +221,7 @@ const DirectGallery = () => {
         </div>
       )}
 
-      <div className="max-w-[95%] mx-auto">
+      <div className="w-full mx-auto px-0">
         {/* ملاحظة: نستخدم تقسيم مختلف للصور لعرض جميع الـ 109 صورة */}
         {renderGalleryRow(galleryImages.slice(0, 18), 1, false, 'fast')}
         {renderGalleryRow(galleryImages.slice(18, 36), 2, true, 'fast')}
