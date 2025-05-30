@@ -142,7 +142,7 @@ export default function Home() {
           {/* زر آراء العملاء - تم نقله أسفل قسم الشات */}
           <div className="flex justify-center mt-12">
             <Link 
-              href={`/testimonials`} 
+              href={`/gallery`} 
               className="group relative overflow-hidden rounded-xl transition-all duration-300 hover:shadow-2xl block"
             >
               <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-[2px] rounded-xl">
