@@ -3,12 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Castle } from '@/lib/castlesService';
-
-// استخدام واجهة القلعة المستوردة من castlesService
 
 // بيانات القلاع الافتراضية للعرض قبل تحميل البيانات من قاعدة البيانات
-const defaultCastles: Castle[] = [
+const defaultCastles = [
   {
     id: "castle-1",
     name: "قلعة الصمود",
@@ -19,7 +16,8 @@ const defaultCastles: Castle[] = [
     features: ["تحصينات متقدمة", "خندق دفاعي", "أبراج مراقبة"],
     icon: "🏰",
     popular: true,
-    videoUrl: "https://example.com/castle1.mp4"
+    videoUrl: "https://example.com/castle1.mp4",
+    castleType: "fortified"
   },
   {
     id: "castle-2",
@@ -31,16 +29,18 @@ const defaultCastles: Castle[] = [
     features: ["دفاعات متطورة", "قاعة تدريب فاخرة", "سجن القلعة"],
     icon: "🏯",
     popular: false,
-    videoUrl: "https://example.com/castle2.mp4"
+    videoUrl: "https://example.com/castle2.mp4",
+    castleType: "royal"
   }
 ];
 
 export default function CastlesAdmin() {
   const router = useRouter();
-  const [castles, setCastles] = useState<Castle[]>(defaultCastles);
+  const [castles, setCastles] = useState(defaultCastles);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [currentCastle, setCurrentCastle] = useState<Castle | null>(null);
+  const [currentCastle, setCurrentCastle] = useState(null);
   
   // وظيفة تحميل القلاع من قاعدة البيانات عبر API
   const loadCastles = async () => {
@@ -54,7 +54,7 @@ export default function CastlesAdmin() {
       }
       
       const data = await response.json();
-      const castlesData = data.castles as Castle[] || [];
+      const castlesData = data.castles || [];
       
       // إذا لم تكن هناك قلاع في قاعدة البيانات، استخدم البيانات الافتراضية
       if (castlesData.length === 0) {
@@ -74,7 +74,7 @@ export default function CastlesAdmin() {
         const freshResponse = await fetch('/api/castles');
         if (freshResponse.ok) {
           const freshData = await freshResponse.json();
-          const freshCastles = freshData.castles as Castle[] || [];
+          const freshCastles = freshData.castles || [];
           setCastles(freshCastles);
         }
       } else {
@@ -119,7 +119,7 @@ export default function CastlesAdmin() {
   };
   
   // وظيفة تحرير قلعة
-  const handleEditCastle = (castle: Castle) => {
+  const handleEditCastle = (castle: any) => {
     setCurrentCastle(castle);
     setShowAddForm(true);
   };
@@ -131,7 +131,7 @@ export default function CastlesAdmin() {
   };
   
   // وظيفة حفظ القلعة (إضافة أو تحديث)
-  const handleSaveCastle = async (castle: Castle) => {
+  const handleSaveCastle = async (castle: any) => {
     setIsLoading(true);
     try {
       if (castle.id && castle.id !== "castle-1" && castle.id !== "castle-2") {
@@ -203,73 +203,87 @@ export default function CastlesAdmin() {
         </div>
       </div>
       
+      {error && (
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6">
+          <p>{error}</p>
+        </div>
+      )}
+      
       {isLoading ? (
         <div className="text-center py-8">جاري تحميل البيانات...</div>
       ) : showAddForm ? (
         <CastleForm 
-          castle={currentCastle} 
+          castle={currentCastle || undefined} 
           onCancel={() => setShowAddForm(false)}
           onSave={handleSaveCastle}
         />
       ) : (
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">القلعة</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">المستوى</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">القوة</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">السعر</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">فيديو</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">إجراءات</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {castles.map((castle) => (
-                <tr key={castle.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center">
-                      <span className="text-2xl mr-2">{castle.icon}</span>
-                      <div>
-                        <div className="font-medium text-gray-900">{castle.name}</div>
-                        <div className="text-gray-500 text-sm truncate max-w-xs">{castle.description}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">{castle.level}</td>
-                  <td className="px-6 py-4">{castle.strength}</td>
-                  <td className="px-6 py-4">{castle.price} $</td>
-                  <td className="px-6 py-4">
-                    {castle.videoUrl ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        متوفر
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                        غير متوفر
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-sm font-medium">
-                    <div className="flex space-x-2">
-                      <button 
-                        onClick={() => handleEditCastle(castle)} 
-                        className="text-blue-600 hover:text-blue-900 ml-2"
-                      >
-                        تحرير
-                      </button>
-                      <button 
-                        onClick={() => castle.id && handleDeleteCastle(castle.id)} 
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        حذف
-                      </button>
-                    </div>
-                  </td>
+          {castles.length === 0 ? (
+            <div className="p-6 text-center">
+              <p className="text-gray-500">لا توجد قلاع. قم بإضافة قلعة جديدة.</p>
+            </div>
+          ) : (
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">القلعة</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">المستوى</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">القوة</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">السعر</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">النوع</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">فيديو</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">إجراءات</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {castles.map((castle) => (
+                  <tr key={castle.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center">
+                        <span className="text-2xl mr-2">{castle.icon}</span>
+                        <div>
+                          <div className="font-medium text-gray-900">{castle.name}</div>
+                          <div className="text-gray-500 text-sm truncate max-w-xs">{castle.description}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">{castle.level}</td>
+                    <td className="px-6 py-4">{castle.strength}</td>
+                    <td className="px-6 py-4">{castle.price} $</td>
+                    <td className="px-6 py-4">{castle.castleType}</td>
+                    <td className="px-6 py-4">
+                      {castle.videoUrl ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          متوفر
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                          غير متوفر
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-sm font-medium">
+                      <div className="flex space-x-2">
+                        <button 
+                          onClick={() => handleEditCastle(castle)} 
+                          className="text-blue-600 hover:text-blue-900 ml-2"
+                        >
+                          تحرير
+                        </button>
+                        <button 
+                          onClick={() => castle.id && handleDeleteCastle(castle.id)} 
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          حذف
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       )}
     </div>
@@ -277,26 +291,11 @@ export default function CastlesAdmin() {
 }
 
 // مكون نموذج إضافة/تعديل القلعة
-interface CastleFormProps {
-  castle: Castle | null;
-  onCancel: () => void;
-  onSave: (castle: Castle) => void;
-}
-
-// حالة تحميل الفيديو
-interface VideoUploadState {
-  file: File | null;
-  uploading: boolean;
-  progress: number;
-  error: string | null;
-  url: string | null;
-}
-
-function CastleForm({ castle, onCancel, onSave }: CastleFormProps) {
+function CastleForm({ castle, onCancel, onSave }: { castle?: any, onCancel: () => void, onSave: (castle: any) => void }) {
   const isEditing = !!castle;
   
   // إعداد البيانات الافتراضية إذا كانت إضافة جديدة
-  const emptyFormData: Castle = {
+  const emptyFormData = {
     id: '',
     name: '',
     description: '',
@@ -306,15 +305,16 @@ function CastleForm({ castle, onCancel, onSave }: CastleFormProps) {
     features: [],
     icon: '🏰',
     popular: false,
-    videoUrl: ''
+    videoUrl: '',
+    castleType: 'standard'
   };
   
   // حالة النموذج
-  const [formData, setFormData] = useState<Castle>(castle || emptyFormData);
-  const [newFeature, setNewFeature] = useState<string>('');
+  const [formData, setFormData] = useState(castle || emptyFormData);
+  const [newFeature, setNewFeature] = useState('');
   
   // حالة تحميل الفيديو
-  const [videoUpload, setVideoUpload] = useState<VideoUploadState>({
+  const [videoUpload, setVideoUpload] = useState({
     file: null,
     uploading: false,
     progress: 0,
@@ -326,7 +326,7 @@ function CastleForm({ castle, onCancel, onSave }: CastleFormProps) {
   const videoInputRef = React.useRef<HTMLInputElement>(null);
   
   // وظيفة لتحويل القيم النصية مثل 1M، 2B إلى أرقام
-  const parseNumericValue = (value: string): number => {
+  const parseNumericValue = (value: string | number) => {
     if (!value) return 0;
     
     // التحقق من وجود K أو M أو B للمضاعفات
@@ -344,7 +344,7 @@ function CastleForm({ castle, onCancel, onSave }: CastleFormProps) {
   };
 
   // وظيفة لتنسيق الأرقام الكبيرة إلى صيغة مقروءة
-  const formatNumericValue = (value: number): string => {
+  const formatNumericValue = (value: number) => {
     if (value >= 1000000000) {
       return (value / 1000000000).toFixed(1) + 'B';
     } else if (value >= 1000000) {
@@ -565,7 +565,7 @@ function CastleForm({ castle, onCancel, onSave }: CastleFormProps) {
     }
     
     // تحديث بيانات القلعة
-    const updatedCastle: Castle = {
+    const updatedCastle = {
       ...formData,
       features: formData.features || [],
       // استخدم الرابط المُعالج
@@ -580,27 +580,27 @@ function CastleForm({ castle, onCancel, onSave }: CastleFormProps) {
     <div className="bg-white p-6 rounded-lg shadow-md">
       <h2 className="text-xl font-semibold mb-6">{isEditing ? 'تعديل قلعة' : 'إضافة قلعة جديدة'}</h2>
       
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="text-right font-noto-sans-arabic">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-gray-700 mb-2">اسم القلعة *</label>
+            <label className="block text-gray-700 mb-2 text-lg font-medium">اسم القلعة *</label>
             <input
               type="text"
               name="name"
               value={formData.name || ''}
               onChange={handleInputChange}
-              className="w-full p-2 border border-gray-300 rounded-md"
+              className="w-full p-3 border border-gray-300 rounded-md text-lg font-noto-sans-arabic"
               required
             />
           </div>
           
           <div>
-            <label className="block text-gray-700 mb-2">الرمز التعبيري</label>
+            <label className="block text-gray-700 mb-2 text-lg font-medium">الرمز التعبيري</label>
             <select
               name="icon"
               value={formData.icon || '🏰'}
               onChange={handleInputChange}
-              className="w-full p-2 border border-gray-300 rounded-md"
+              className="w-full p-3 border border-gray-300 rounded-md text-lg font-noto-sans-arabic"
             >
               <option value="🏰">🏰 قلعة</option>
               <option value="🏯">🏯 قلعة يابانية</option>
@@ -611,55 +611,55 @@ function CastleForm({ castle, onCancel, onSave }: CastleFormProps) {
           </div>
           
           <div className="md:col-span-2">
-            <label className="block text-gray-700 mb-2">وصف القلعة *</label>
+            <label className="block text-gray-700 mb-2 text-lg font-medium">وصف القلعة *</label>
             <textarea
               name="description"
               value={formData.description || ''}
               onChange={handleInputChange}
-              className="w-full p-2 border border-gray-300 rounded-md"
+              className="w-full p-3 border border-gray-300 rounded-md text-lg font-noto-sans-arabic"
               rows={3}
               required
             />
           </div>
           
           <div>
-            <label className="block text-gray-700 mb-2">المستوى</label>
+            <label className="block text-gray-700 mb-2 text-lg font-medium">المستوى</label>
             <input
               type="number"
               name="level"
               min="1"
               value={formData.level || 1}
               onChange={handleInputChange}
-              className="w-full p-2 border border-gray-300 rounded-md"
+              className="w-full p-3 border border-gray-300 rounded-md text-lg font-noto-sans-arabic"
             />
           </div>
           
           <div>
-            <label className="block text-gray-700 mb-2">القوة</label>
+            <label className="block text-gray-700 mb-2 text-lg font-medium">القوة</label>
             <input
               type="text"
               name="strength"
               value={formData.strength ? formatNumericValue(formData.strength) : '50'}
               onChange={handleInputChange}
-              className="w-full p-2 border border-gray-300 rounded-md"
+              className="w-full p-3 border border-gray-300 rounded-md text-lg font-noto-sans-arabic"
               placeholder="مثال: 1M, 500K, 2B"
             />
           </div>
           
           <div>
-            <label className="block text-gray-700 mb-2">السعر</label>
+            <label className="block text-gray-700 mb-2 text-lg font-medium">السعر</label>
             <input
               type="text"
               name="price"
               value={formData.price ? formatNumericValue(formData.price) : '100'}
               onChange={handleInputChange}
-              className="w-full p-2 border border-gray-300 rounded-md"
+              className="w-full p-3 border border-gray-300 rounded-md text-lg font-noto-sans-arabic"
               placeholder="مثال: 1M, 500K, 2B"
             />
           </div>
           
           <div>
-            <label className="inline-flex items-center">
+            <label className="inline-flex items-center text-lg">
               <input
                 type="checkbox"
                 name="popular"
@@ -667,13 +667,30 @@ function CastleForm({ castle, onCancel, onSave }: CastleFormProps) {
                 onChange={handleInputChange}
                 className="form-checkbox h-5 w-5 text-blue-600"
               />
-              <span className="mr-2 text-gray-700">مميز (عرض شارة مميز)</span>
+              <span className="mr-2 text-gray-700 font-medium">مميز (عرض شارة مميز)</span>
             </label>
+          </div>
+          
+          <div>
+            <label className="block text-gray-700 mb-2 text-lg font-medium">نوع القلعة *</label>
+            <select
+              name="castleType"
+              value={formData.castleType || 'standard'}
+              onChange={handleInputChange}
+              className="w-full p-3 border border-gray-300 rounded-md text-lg font-noto-sans-arabic"
+              required
+            >
+              <option value="standard">قياسية</option>
+              <option value="fortified">محصنة</option>
+              <option value="royal">ملكية</option>
+              <option value="ancient">قديمة</option>
+              <option value="modern">عصرية</option>
+            </select>
           </div>
           
           {/* قسم ميزات القلعة */}
           <div className="md:col-span-2">
-            <label className="block text-gray-700 mb-2">ميزات القلعة</label>
+            <label className="block text-gray-700 mb-2 text-lg font-medium">ميزات القلعة</label>
             <div className="flex">
               <input
                 type="text"
@@ -692,7 +709,7 @@ function CastleForm({ castle, onCancel, onSave }: CastleFormProps) {
             </div>
             
             <div className="mt-2 flex flex-wrap gap-2">
-              {formData.features?.map((feature, index) => (
+              {formData.features?.map((feature: string, index: number) => (
                 <div key={index} className="bg-gray-100 px-3 py-1 rounded-full flex items-center">
                   <span>{feature}</span>
                   <button
@@ -709,7 +726,7 @@ function CastleForm({ castle, onCancel, onSave }: CastleFormProps) {
           
           {/* قسم الفيديو */}
           <div className="md:col-span-2">
-            <label className="block text-gray-700 mb-2">رابط فيديو القلعة</label>
+            <label className="block text-gray-700 mb-2 text-lg font-medium">رابط فيديو القلعة</label>
             <div className="flex flex-col gap-2">
               <input
                 type="text"
@@ -726,7 +743,7 @@ function CastleForm({ castle, onCancel, onSave }: CastleFormProps) {
           </div>
           
           <div className="md:col-span-2">
-            <label className="block text-gray-700 mb-2">رفع فيديو</label>
+            <label className="block text-gray-700 mb-2 text-lg font-medium">رفع فيديو</label>
             <div className="flex flex-col space-y-4">
               {/* منطقة رفع الفيديو */}
               <div 
@@ -739,8 +756,8 @@ function CastleForm({ castle, onCancel, onSave }: CastleFormProps) {
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
-                      <span className="mt-2 text-gray-700">{videoUpload.file.name}</span>
-                      <span className="text-sm text-gray-500">{(videoUpload.file.size / (1024 * 1024)).toFixed(2)} ميجابايت</span>
+                      <span className="mt-2 text-gray-700">{(videoUpload.file as File).name}</span>
+                      <span className="text-sm text-gray-500">{((videoUpload.file as File).size / (1024 * 1024)).toFixed(2)} ميجابايت</span>
                     </div>
                   ) : (
                     <>
@@ -822,3 +839,4 @@ function CastleForm({ castle, onCancel, onSave }: CastleFormProps) {
     </div>
   );
 }
+
