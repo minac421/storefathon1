@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import ServiceCartButton from '@/components/cart/ServiceCartButton';
 import ServiceCartDropdown from '@/components/cart/ServiceCartDropdown';
+import ProductDetailsModal from '@/components/modals/ProductDetailsModal';
 
 // نوع لعناصر السلة
 type CartItem = {
@@ -142,6 +143,11 @@ export default function ServicesPage() {
   const [quantities, setQuantities] = useState<Record<string, number>>({})
   const [totalItems, setTotalItems] = useState(0);
   
+  // حالة المنتج المختار للعرض في النافذة المنبثقة
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [selectedCategory, setSelectedCategory] = useState<'resources' | 'bots' | 'castle' | 'events' | 'charging'>('resources');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
   // حالة الخدمات المستحضرة من API
   const [services, setServices] = useState<ServicesData>(defaultServices);
   const [loading, setLoading] = useState<boolean>(true);
@@ -158,6 +164,35 @@ export default function ServicesPage() {
         }
         const data = await response.json();
         console.log('بيانات الخدمات:', data);
+        
+        // معالجة الصور بشكل صحيح
+        if (data.services) {
+          // نمر على كل فئة من الخدمات
+          Object.keys(data.services).forEach(category => {
+            if (data.services[category] && Array.isArray(data.services[category])) {
+              // نمر على كل منتج في الفئة
+              data.services[category] = data.services[category].map(product => {
+                // تنسيق مسار الصورة إذا كان موجودًا
+                if (product.image && typeof product.image === 'string' && !product.image.startsWith('http') && !product.image.startsWith('/')) {
+                  product.image = `/${product.image}`;
+                }
+                
+                // معالجة مصفوفة الصور إذا كانت موجودة
+                if (product.images && Array.isArray(product.images)) {
+                  product.images = product.images.map(img => {
+                    if (typeof img === 'string' && !img.startsWith('http') && !img.startsWith('/')) {
+                      return `/${img}`;
+                    }
+                    return img;
+                  });
+                }
+                
+                return product;
+              });
+            }
+          });
+        }
+        
         setServices(data.services);
         setError(null);
       } catch (error) {
@@ -406,11 +441,6 @@ export default function ServicesPage() {
     }
   };
   
-  // استخدام state لتتبع الكمية لكل منتج
-  // استخدام القيم المعرفة سابقاً
-
-  // استخدام وظائف الكمية المعرفة سابقاً
-
   // عنصر عرض المنتج
   const ProductCard = ({ item, category }: { item: any, category: 'resources' | 'bots' | 'castle' | 'events' | 'charging' }) => {
     const productKey = `${category}-${item.id}`;
@@ -440,8 +470,63 @@ export default function ServicesPage() {
       }
     };
     
+    // الحصول على الأيقونة المناسبة
+    const getIcon = () => {
+      if (category === 'resources') {
+        if (item.iconAlt === 'مليار قمح') return '🌾';
+        if (item.iconAlt === 'حديد') return '⚙️';
+        if (item.iconAlt === 'خشب') return '🌲';
+        if (item.iconAlt === 'ذهب') return '💰';
+        return '📦';
+      } else if (category === 'bots') {
+        return '🤖';
+      } else if (category === 'events') {
+        return '🎮';
+      } else if (category === 'castle') {
+        return '🏰';
+      } else if (category === 'charging') {
+        return '💳';
+      }
+      return '📦';
+    };
+    
+    // فتح تفاصيل المنتج
+    const handleShowDetails = () => {
+      // تأكد من أن المنتج يحتوي على كل البيانات المطلوبة
+      console.log('فتح تفاصيل المنتج:', { ...item, category });
+      
+      // تنظيف مسار الصورة من الشرطات المزدوجة
+      const cleanImagePath = (path: string) => {
+        if (!path) return null;
+        // إزالة الشرطة البادئة إن وجدت
+        const pathWithoutLeadingSlash = path.startsWith('/') ? path.substring(1) : path;
+        // إضافة شرطة في البداية
+        return `/${pathWithoutLeadingSlash}`;
+      };
+      
+      // نسخة كاملة من المنتج
+      const fullProduct = {
+        ...item,
+        // تحويل الاسم والوصف إلى الصيغة المطلوبة للمودال
+        name: typeof item.name === 'string' ? { ar: item.name, en: item.name, tr: item.name } : item.name,
+        description: item.description && typeof item.description === 'string' ? 
+          { ar: item.description, en: item.description, tr: item.description } : 
+          item.description,
+        // تنظيف مسارات الصور
+        image: item.image ? cleanImagePath(item.image) : null,
+        images: item.images ? item.images.map(img => cleanImagePath(img)) : []
+      };
+      
+      console.log('تمرير منتج كامل للمودال مع الصور:', fullProduct);
+      
+      setSelectedProduct(fullProduct);
+      setSelectedCategory(category);
+      setIsModalOpen(true);
+    };
+    
     return (
-      <div className={`bg-white rounded-2xl shadow-lg hover:shadow-xl overflow-hidden transition-all duration-300 transform hover:-translate-y-2 border-2 ${getCardBorderColor()} relative pb-24 group`}>
+      <div className={`bg-white rounded-2xl shadow-lg hover:shadow-xl overflow-hidden transition-all duration-300 transform hover:-translate-y-2 border-2 ${getCardBorderColor()} relative pb-24 group cursor-pointer`}
+           onClick={handleShowDetails}>
         {/* شارة للمنتجات المميزة أو الشائعة */}
         {item.popular && (
           <div className="absolute top-2 right-2 z-20">
@@ -469,42 +554,11 @@ export default function ServicesPage() {
           {/* أيقونة المنتج بتصميم محسن */}
           <div className="flex items-center justify-center mb-5">
             <div className={`w-24 h-24 ${getIconBgColor()} rounded-full flex items-center justify-center text-4xl shadow-md border border-white relative overflow-hidden group`}>
-              {category === 'resources' ? (
-                <div className="relative z-10 transform transition-transform duration-300 group-hover:scale-110">
-                  {item.iconAlt === 'مليار قمح' && 
-                    <span role="img" aria-label="قمح" className="text-5xl">🌾</span>
-                  }
-                  {item.iconAlt === 'حديد' && 
-                    <span role="img" aria-label="حديد" className="text-5xl">⚙️</span>
-                  }
-                  {item.iconAlt === 'خشب' && 
-                    <span role="img" aria-label="خشب" className="text-5xl">🌲</span>
-                  }
-                  {item.iconAlt === 'ذهب' && 
-                    <span role="img" aria-label="ذهب" className="text-5xl">💰</span>
-                  }
-                  {/* إذا لم يكن معروف */}
-                  {!['مليار قمح', 'حديد', 'خشب', 'ذهب'].includes(item.iconAlt) && item.iconAlt}
-                </div>
-              ) : category === 'bots' ? (
-                <div className="relative z-10 transform transition-transform duration-300 group-hover:scale-110">
-                  <span role="img" aria-label="بوت" className="text-5xl">🤖</span>
-                </div>
-              ) : category === 'events' ? (
-                <div className="relative z-10 transform transition-transform duration-300 group-hover:scale-110">
-                  <span role="img" aria-label="حدث" className="text-5xl">🎮</span>
-                </div>
-              ) : category === 'castle' ? (
-                <div className="relative z-10 transform transition-transform duration-300 group-hover:scale-110">
-                  <span role="img" aria-label="قلعة" className="text-5xl">🏰</span>
-                </div>
-              ) : category === 'charging' ? (
-                <div className="relative z-10 transform transition-transform duration-300 group-hover:scale-110">
-                  <span role="img" aria-label="شحن" className="text-5xl">💳</span>
-                </div>
-              ) : (
-                <div className="relative z-10">{item.iconAlt}</div>
-              )}
+              <div className="relative z-10 transform transition-transform duration-300 group-hover:scale-110">
+                <span role="img" aria-label={item.iconAlt || 'منتج'} className="text-5xl">
+                  {getIcon()}
+                </span>
+              </div>
               <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
             </div>
           </div>
@@ -537,7 +591,10 @@ export default function ServicesPage() {
           {/* محدد الكمية بتصميم محسن */}
           <div className="flex items-center justify-center mb-5">
             <button 
-              onClick={() => decreaseQuantity(productKey)}
+              onClick={(e) => {
+                e.stopPropagation();
+                decreaseQuantity(productKey);
+              }}
               className="w-12 h-12 rounded-lg bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200 transition-colors text-xl font-bold border border-gray-200 hover:border-gray-300"
               aria-label="تقليل الكمية"
             >
@@ -558,7 +615,10 @@ export default function ServicesPage() {
               aria-label="الكمية"
             />
             <button 
-              onClick={() => increaseQuantity(productKey)}
+              onClick={(e) => {
+                e.stopPropagation();
+                increaseQuantity(productKey);
+              }}
               className="w-12 h-12 rounded-lg bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200 transition-colors text-xl font-bold border border-gray-200 hover:border-gray-300"
               aria-label="زيادة الكمية"
             >
@@ -573,7 +633,10 @@ export default function ServicesPage() {
                 ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md shadow-green-200 hover:shadow-lg' 
                 : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-md hover:shadow-lg shadow-amber-200'
             }`}
-            onClick={() => handleAddToCart(item, category)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleAddToCart(item, category);
+            }}
           >
             {addedItems[productKey] 
               ? (
@@ -596,6 +659,76 @@ export default function ServicesPage() {
         </div>
       </div>
     );
+  };
+
+  // إضافة منتج من النافذة المنبثقة
+  const handleAddFromModal = (product: any, category: string, quantity: number) => {
+    // تعليم المنتج كمضاف للسلة
+    const key = `${category}-${product.id}`;
+    setAddedItems(prev => ({
+      ...prev,
+      [key]: true
+    }));
+    
+    // إضافة المنتج للسلة بالكمية المحددة
+    const itemName = typeof product.name === 'object' ? product.name[locale as keyof typeof product.name] : product.name;
+    const existingItemIndex = cartItems.findIndex(
+      cartItem => cartItem.id === product.id && cartItem.category === category
+    );
+    
+    let updatedCart;
+    
+    if (existingItemIndex !== -1) {
+      // المنتج موجود بالفعل
+      updatedCart = [...cartItems];
+      updatedCart[existingItemIndex].quantity += quantity;
+    } else {
+      // منتج جديد
+      const icon = getIconForCategory(category, product.iconAlt);
+      updatedCart = [
+        ...cartItems,
+        {
+          id: product.id,
+          name: itemName,
+          price: product.price,
+          icon: icon,
+          category,
+          quantity: quantity
+        }
+      ];
+    }
+    
+    setCartItems(updatedCart);
+    updateTotalItems(updatedCart);
+    saveCartToLocalStorage(updatedCart);
+    
+    // إزالة علامة المضاف بعد ثانيتين
+    setTimeout(() => {
+      setAddedItems(prev => ({
+        ...prev,
+        [key]: false
+      }));
+    }, 2000);
+  };
+
+  // الحصول على أيقونة بناء على الفئة
+  const getIconForCategory = (category: string, iconAlt?: string) => {
+    if (category === 'resources') {
+      if (iconAlt === 'مليار قمح') return '🌾';
+      if (iconAlt === 'حديد') return '⚙️';
+      if (iconAlt === 'خشب') return '🌲';
+      if (iconAlt === 'ذهب') return '💰';
+      return '📦';
+    } else if (category === 'bots') {
+      return '🤖';
+    } else if (category === 'events') {
+      return '🎮';
+    } else if (category === 'castle') {
+      return '🏰';
+    } else if (category === 'charging') {
+      return '💳';
+    }
+    return '📦';
   };
 
   return (
@@ -825,6 +958,21 @@ export default function ServicesPage() {
           </div>
         )}
       </div>
+      
+      {/* نافذة تفاصيل المنتج */}
+      {selectedProduct && (
+        <ProductDetailsModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            console.log('Closing modal');
+            setIsModalOpen(false);
+          }}
+          product={selectedProduct}
+          category={selectedCategory}
+          locale={locale}
+          onAddToCart={handleAddFromModal}
+        />
+      )}
     </div>
   );
 }
