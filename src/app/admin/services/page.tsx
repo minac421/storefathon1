@@ -267,6 +267,19 @@ export default function ServicesManagement() {
     }
   };
   
+  // دالة لتوليد معرف فريد للمنتج
+  const generateUniqueId = (name: string): string => {
+    // تحويل الاسم إلى سلسلة نصية آمنة للاستخدام كمعرف
+    const baseId = name.toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '') // إزالة أي أحرف خاصة
+      .replace(/\s+/g, '-') // استبدال المسافات بشرطات
+      .replace(/-+/g, '-'); // تقليل الشرطات المتكررة
+    
+    // إضافة طابع زمني للتأكد من الفرادة
+    return `${baseId}-${Date.now().toString().slice(-6)}`;
+  };
+  
   // التعامل مع اختيار الصور
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -309,62 +322,75 @@ export default function ServicesManagement() {
   // إرسال النموذج
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     
-    // التحقق من المعرف
-    const productId = productForm.id || productForm.name.toLowerCase().replace(/\s/g, '-');
-    
-    if (!isEditMode && checkIdExists(productId, productForm.category)) {
-      alert(`المعرف "${productId}" مستخدم بالفعل في فئة "${
-        productForm.category === 'resources' ? 'الموارد' :
-        productForm.category === 'events' ? 'الأحداث' :
-        productForm.category === 'bots' ? 'البوتات' :
-        productForm.category === 'castle' ? 'القلاع' :
-        productForm.category === 'charging' ? 'الشحن' :
-        'خدمات الشحن'
-      }". الرجاء استخدام معرف آخر.`);
+    // التحقق من صحة البيانات
+    if (!productForm.name || !productForm.category || productForm.price <= 0) {
+      alert('الرجاء ملء جميع الحقول المطلوبة (الاسم، الفئة، السعر)');
+      setLoading(false);
       return;
     }
     
-    setLoading(true);
+    // إنشاء معرف جديد إذا كان منتجًا جديدًا
+    let productId = productForm.id;
+    if (!isEditMode || !productId) {
+      productId = generateUniqueId(productForm.name);
+    }
+    
+    // التحقق من وجود المعرف إذا كان منتج جديد
+    if (!isEditMode && checkIdExists(productId, productForm.category)) {
+      alert(`المعرف ${productId} موجود بالفعل في هذه الفئة. يرجى استخدام اسم مختلف.`);
+      setLoading(false);
+      return;
+    }
     
     try {
-          // رفع الصورة إذا تم اختيارها
-    let imageUrl = productForm.image || '';
-    
-    if (productImage) {
-      console.log('بدء رفع الصورة...');
+      // رفع الصورة إذا تم اختيارها
+      let imageUrl = productForm.image || '';
       
-      try {
-        const formData = new FormData();
-        formData.append('file', productImage);
-        formData.append('category', productForm.category);
-        formData.append('id', productId);
+      if (productImage) {
+        console.log('بدء رفع الصورة...');
         
-        console.log('إرسال بيانات الصورة:', productImage.name, 'الفئة:', productForm.category, 'المعرف:', productId);
-        
-        const uploadResponse = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData
-        });
-        
-        console.log('استجابة رفع الصورة - الحالة:', uploadResponse.status);
-        
-        if (!uploadResponse.ok) {
-          const errorText = await uploadResponse.text();
-          console.error('خطأ في استجابة رفع الصورة:', errorText);
-          throw new Error(errorText || 'حدث خطأ أثناء رفع الصورة');
+        try {
+          const formData = new FormData();
+          formData.append('file', productImage);
+          formData.append('category', productForm.category);
+          formData.append('id', productId);
+          
+          console.log('إرسال بيانات الصورة:', productImage.name, 'الفئة:', productForm.category, 'المعرف:', productId);
+          
+          // عرض رسالة تحميل
+          const uploadMessage = document.createElement('div');
+          uploadMessage.className = 'fixed top-0 left-0 right-0 bg-amber-100 text-amber-800 p-2 text-center z-50';
+          uploadMessage.textContent = 'جاري رفع الصورة...';
+          document.body.appendChild(uploadMessage);
+          
+          const uploadResponse = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData
+          });
+          
+          // إزالة رسالة التحميل
+          document.body.removeChild(uploadMessage);
+          
+          console.log('استجابة رفع الصورة - الحالة:', uploadResponse.status);
+          
+          if (!uploadResponse.ok) {
+            const errorText = await uploadResponse.text();
+            console.error('خطأ في استجابة رفع الصورة:', errorText);
+            throw new Error(errorText || 'حدث خطأ أثناء رفع الصورة');
+          }
+          
+          const uploadData = await uploadResponse.json();
+          console.log('تم رفع الصورة بنجاح، المسار:', uploadData.url);
+          imageUrl = uploadData.url;
+        } catch (error) {
+          console.error('خطأ أثناء رفع الصورة:', error);
+          alert('حدث خطأ أثناء رفع الصورة، يرجى المحاولة مرة أخرى');
+          setLoading(false);
+          return;
         }
-        
-        const uploadData = await uploadResponse.json();
-        console.log('تم رفع الصورة بنجاح، المسار:', uploadData.url);
-        imageUrl = uploadData.url;
-      } catch (error) {
-        console.error('خطأ أثناء رفع الصورة:', error);
-        alert('حدث خطأ أثناء رفع الصورة، يرجى المحاولة مرة أخرى');
-        setLoading(false);
-        return;
       }
-    }
       
       // تحضير البيانات للإرسال بالتنسيق الصحيح
       const finalProductId = productId;
@@ -376,37 +402,37 @@ export default function ServicesManagement() {
         صورة: imageUrl
       });
       
-          console.log('تجهيز بيانات المنتج للإرسال مع الصورة:', imageUrl);
-    
-    const serviceData = {
-      id: finalProductId,
-      category: productForm.category,
-      name: {
-        ar: productForm.name,
-        en: productForm.name,
-        tr: productForm.name
-      },
-      price: productForm.price,
-      icon: productForm.icon || '💳',
-      iconAlt: productForm.name,
-      popular: productForm.popular,
-      image: imageUrl, // مسار الصورة بعد الرفع
-      description: productForm.description ? {
-        ar: productForm.description,
-        en: productForm.description,
-        tr: productForm.description
-      } : undefined
-    };
-    
-    console.log('بيانات المنتج النهائية للإرسال:', JSON.stringify(serviceData));
+      console.log('تجهيز بيانات المنتج للإرسال مع الصورة:', imageUrl);
+      
+      const serviceData = {
+        id: finalProductId,
+        category: productForm.category,
+        name: {
+          ar: productForm.name,
+          en: productForm.name,
+          tr: productForm.name
+        },
+        price: productForm.price,
+        icon: productForm.icon || '💳',
+        iconAlt: productForm.name,
+        popular: productForm.popular,
+        image: imageUrl, // مسار الصورة بعد الرفع
+        description: productForm.description ? {
+          ar: productForm.description,
+          en: productForm.description,
+          tr: productForm.description
+        } : undefined
+      };
+      
+      console.log('بيانات المنتج النهائية للإرسال:', JSON.stringify(serviceData));
       
       console.log('البيانات المجهزة للإرسال:', JSON.stringify(serviceData));
       
-      let response;
+      let apiResponse;
       
       if (isEditMode) {
         // تحديث منتج موجود
-        response = await fetch('/api/services', {
+        apiResponse = await fetch('/api/services', {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json'
@@ -415,7 +441,7 @@ export default function ServicesManagement() {
         });
       } else {
         // إضافة منتج جديد
-        response = await fetch('/api/services', {
+        apiResponse = await fetch('/api/services', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -424,8 +450,8 @@ export default function ServicesManagement() {
         });
       }
       
-      if (!response.ok) {
-        const errorData = await response.json();
+      if (!apiResponse.ok) {
+        const errorData = await apiResponse.json();
         console.error('خطأ في استجابة API:', errorData);
         throw new Error(errorData.error || errorData.message || 'حدث خطأ أثناء حفظ البيانات');
       }
@@ -798,7 +824,7 @@ export default function ServicesManagement() {
                     <input
                       type="file"
                       id="productImage"
-                      accept="image/*"
+                      accept="image/jpeg,image/jpg,image/png,image/webp"
                       onChange={handleImageChange}
                       className="hidden"
                     />
@@ -860,8 +886,22 @@ export default function ServicesManagement() {
                         </button>
                       </div>
                     ) : (
-                      <div className="w-full h-40 flex items-center justify-center border border-gray-200 rounded-lg bg-gray-50">
-                        <p className="text-gray-400 text-center">لم يتم اختيار صورة</p>
+                      <div className="text-center p-4 bg-gray-50 border border-gray-200 rounded-lg w-full h-40 flex flex-col items-center justify-center">
+                        <svg
+                          className="w-8 h-8 mb-2 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          ></path>
+                        </svg>
+                        <p className="text-sm text-gray-500">لم يتم اختيار صورة بعد</p>
                       </div>
                     )}
                   </div>
