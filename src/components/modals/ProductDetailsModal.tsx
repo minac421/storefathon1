@@ -44,15 +44,6 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
   const [selectedImageIndex, setSelectedImageIndex] = React.useState(0);
   const [imageError, setImageError] = React.useState(false);
   
-  // دالة لتنظيف مسارات الصور
-  const cleanImagePath = (path: string) => {
-    if (!path) return '';
-    // إزالة الشرطة البادئة إن وجدت
-    const pathWithoutLeadingSlash = path.startsWith('/') ? path.substring(1) : path;
-    // إضافة شرطة في البداية
-    return `/${pathWithoutLeadingSlash}`;
-  };
-  
   // إعادة تعيين الحالات عند فتح النافذة
   React.useEffect(() => {
     if (isOpen) {
@@ -63,9 +54,9 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
     }
   }, [isOpen, product]);
 
-  // معالجة الصور - تطبيق دالة تنظيف المسارات
-  const productImage = product && product.image ? [cleanImagePath(product.image)] : [];
-  const productImages = product && product.images && Array.isArray(product.images) ? product.images.map(img => cleanImagePath(img)) : [];
+  // معالجة الصور
+  const productImage = product && product.image ? [product.image] : [];
+  const productImages = product && product.images && Array.isArray(product.images) ? product.images : [];
   
   // دمج مصادر الصور في مصفوفة واحدة
   const allImages = [...productImage, ...productImages].filter(img => img && typeof img === 'string' && img.trim() !== '');
@@ -235,7 +226,7 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
               )}
             </div>
             
-            {/* صور مصغرة - تحسين عرض الصور المصغرة لتظهر فعلياً */}
+            {/* صور مصغرة */}
             {allImages.length > 1 && !imageError && (
               <div className="flex flex-wrap gap-2 justify-center">
                 {allImages.map((image, index) => (

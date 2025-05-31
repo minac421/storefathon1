@@ -495,15 +495,6 @@ export default function ServicesPage() {
       // تأكد من أن المنتج يحتوي على كل البيانات المطلوبة
       console.log('فتح تفاصيل المنتج:', { ...item, category });
       
-      // تنظيف مسار الصورة من الشرطات المزدوجة
-      const cleanImagePath = (path: string) => {
-        if (!path) return null;
-        // إزالة الشرطة البادئة إن وجدت
-        const pathWithoutLeadingSlash = path.startsWith('/') ? path.substring(1) : path;
-        // إضافة شرطة في البداية
-        return `/${pathWithoutLeadingSlash}`;
-      };
-      
       // نسخة كاملة من المنتج
       const fullProduct = {
         ...item,
@@ -512,9 +503,6 @@ export default function ServicesPage() {
         description: item.description && typeof item.description === 'string' ? 
           { ar: item.description, en: item.description, tr: item.description } : 
           item.description,
-        // تنظيف مسارات الصور
-        image: item.image ? cleanImagePath(item.image) : null,
-        images: item.images ? item.images.map(img => cleanImagePath(img)) : []
       };
       
       console.log('تمرير منتج كامل للمودال مع الصور:', fullProduct);

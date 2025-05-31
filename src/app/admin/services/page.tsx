@@ -280,15 +280,6 @@ export default function ServicesManagement() {
     return `${baseId}-${Date.now().toString().slice(-6)}`;
   };
   
-  // دالة لتنظيف مسارات الصور
-  const cleanImagePath = (path: string) => {
-    if (!path) return '';
-    // إزالة الشرطة البادئة إن وجدت
-    const pathWithoutLeadingSlash = path.startsWith('/') ? path.substring(1) : path;
-    // إضافة شرطة في البداية
-    return `/${pathWithoutLeadingSlash}`;
-  };
-  
   // التعامل مع اختيار الصور
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -868,7 +859,7 @@ export default function ServicesManagement() {
                     {(imagePreview || productForm.image) ? (
                       <div className="relative w-full h-40 bg-gray-100 rounded-lg overflow-hidden">
                         <img
-                          src={cleanImagePath(imagePreview || productForm.image)}
+                          src={imagePreview || productForm.image}
                           alt="معاينة الصورة"
                           className="w-full h-full object-cover"
                           onError={(e) => {
@@ -1092,7 +1083,7 @@ export default function ServicesManagement() {
                             {product.image ? (
                               <div className="w-12 h-12 rounded-lg ml-3 overflow-hidden bg-gray-100 flex-shrink-0">
                                 <img 
-                                  src={cleanImagePath(product.image)} 
+                                  src={product.image} 
                                   alt={product.name} 
                                   className="w-full h-full object-cover"
                                   onError={(e) => {
