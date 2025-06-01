@@ -27,7 +27,7 @@ export default function ChatWindow({ locale }) {
     retryCount: 0
   });
 
-  // إعداد اتصال Socket.IO
+  // إعداد اتصال Socket.IO - محسّن لمنع تلخبط الأسماء والصور
   useEffect(() => {
     if (typeof window !== 'undefined') {
       let pollInterval;
@@ -41,6 +41,16 @@ export default function ChatWindow({ locale }) {
       // استخدام طريقة استطلاع بدلاً من Socket.IO لتجنب الأخطاء
       async function setupChatConnection() {
         try {
+          // تأكد من وجود معرف مستخدم ثابت قبل إعداد الاتصال
+          const persistentUserId = localStorage.getItem('persistent_user_id');
+          if (!persistentUserId) {
+            console.log('⚠️ انتظار تهيئة معرف المستخدم...');
+            setTimeout(setupChatConnection, 500);
+            return;
+          }
+          
+          console.log('🔄 بدء إعداد اتصال الدردشة للمستخدم:', persistentUserId);
+          
           // جلب الرسائل الأولية
           await fetchMessages();
           
@@ -60,9 +70,17 @@ export default function ChatWindow({ locale }) {
             emit: (event, data) => {
               console.log(`[Mock Socket] Emitting ${event}:`, data);
               
-              // إرسال الرسائل عبر API
+              // إرسال الرسائل عبر API مع التأكد من وجود معلومات المستخدم الكاملة
               if (event === 'send-message' && data) {
-                sendMessage(data);
+                // إضافة معرف المستخدم الثابت ومعرف الصورة إلى البيانات
+                const enhancedData = {
+                  ...data,
+                  userId: userProfile.userId || persistentUserId,
+                  senderAvatarId: userProfile.avatarId || 1
+                };
+                
+                console.log('📤 إرسال رسالة مع معلومات المستخدم الكاملة:', enhancedData);
+                sendMessage(enhancedData);
               }
               
               // إرسال حالة الكتابة (لا حاجة للإرسال، فقط تحديث الحالة محلياً)
@@ -76,7 +94,7 @@ export default function ChatWindow({ locale }) {
           
           setSocket(mockSocket);
         } catch (error) {
-          console.error('Chat connection error:', error);
+          console.error('❌ خطأ في اتصال الدردشة:', error);
           setConnectionState(prev => ({
             ...prev,
             status: 'error',
@@ -237,60 +255,84 @@ export default function ChatWindow({ locale }) {
     }
   }, [userProfile]);
 
-  // تحميل إعدادات المستخدم عند بدء المكون
+  // تحميل إعدادات المستخدم عند بدء المكون - محسّن لحل مشكلة تلخبط الأسماء والصور
   useEffect(() => {
     // استدعاء API لجلب إعدادات المستخدم
     const fetchUserSettings = async () => {
       try {
-        // أولا، نحاول الحصول على الإعدادات من localStorage
-        const localSettings = getUserSettings();
-        if (localSettings) {
-          // إنشاء معرف فريد للمستخدم إذا لم يكن موجوداً
-          const userId = localSettings.userId || `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-          const updatedSettings = {
-            ...localSettings,
-            userId
-          };
-          setUserProfile(updatedSettings);
-          
-          // تسجيل المستخدم في نظام الشات
-          try {
-            const response = await fetch('/api/chat/register', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(updatedSettings),
-            });
-            
-            if (!response.ok) {
-              throw new Error('فشل في تسجيل المستخدم في الشات');
-            }
-          } catch (error) {
-            console.error('Error registering user in chat:', error);
-          }
+        // 1. إنشاء معرف مستخدم ثابت مخزن في localStorage
+        let persistentUserId = localStorage.getItem('persistent_user_id');
+        if (!persistentUserId) {
+          persistentUserId = `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          localStorage.setItem('persistent_user_id', persistentUserId);
         }
         
-        // ثم نحاول الحصول على الإعدادات من API
-        const response = await fetch('/api/user/settings');
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success && data.settings) {
-            const userId = data.settings.userId || `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-            const updatedSettings = {
-              ...data.settings,
-              userId
-            };
-            setUserProfile(updatedSettings);
+        // 2. الحصول على الإعدادات المحلية
+        const localSettings = getUserSettings();
+        
+        // 3. إنشاء معلومات المستخدم المحدثة مع ضمان وجود معرف ثابت
+        const updatedSettings = {
+          ...(localSettings || {}),
+          userId: persistentUserId, // استخدم دائماً المعرف الثابت
+          avatarId: localSettings?.avatarId || 1, // تأكد من أن avatarId موجود
+          nickname: localSettings?.nickname || 'زائر' // تأكد من أن اسم المستخدم موجود
+        };
+        
+        console.log('⚙️ معلومات المستخدم الثابتة:', updatedSettings);
+        
+        // 4. تحديث حالة المستخدم
+        setUserProfile(updatedSettings);
+        
+        // 5. تسجيل المستخدم في نظام الشات
+        try {
+          const response = await fetch('/api/chat/register', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updatedSettings),
+          });
+          
+          if (!response.ok) {
+            throw new Error('فشل في تسجيل المستخدم في الشات');
+          }
+        } catch (error) {
+          console.error('❌ خطأ في تسجيل المستخدم في الشات:', error);
+        }
+        
+        // 6. محاولة الحصول على الإعدادات من API فقط إذا لم تكن الإعدادات المحلية موجودة
+        if (!localSettings || !localSettings.nickname) {
+          const response = await fetch('/api/user/settings');
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.settings) {
+              // دمج الإعدادات مع الحفاظ على userId الثابت
+              const mergedSettings = {
+                ...data.settings,
+                userId: persistentUserId // حافظ على المعرف الثابت
+              };
+              
+              // تحديث حالة المستخدم
+              setUserProfile(mergedSettings);
+              
+              // تحديث التسجيل مع الخادم
+              await fetch('/api/chat/register', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(mergedSettings),
+              });
+            }
           }
         }
       } catch (error) {
-        console.error('Error fetching user settings:', error);
+        console.error('❌ خطأ في جلب إعدادات المستخدم:', error);
       }
     };
     
     fetchUserSettings();
-  }, []);
+  }, []);  // تنفيذ مرة واحدة فقط عند تحميل المكون
   
   // التمرير التلقائي لأسفل عند إضافة رسائل جديدة
   useEffect(() => {
@@ -336,25 +378,32 @@ export default function ChatWindow({ locale }) {
     };
   }, []);
   
-  // الحصول على صورة المستخدم من معرف الأفاتار
+  // الحصول على صورة المستخدم من معرف الأفاتار - محسّن لمنع أخطاء العرض
   const getAvatarSrc = (avatarId) => {
     try {
-      // ضمان أن avatarId عدد
-      const numericId = parseInt(avatarId) || 1;
+      // التعامل مع الحالات الشاذة والقيم الفارغة
+      if (avatarId === undefined || avatarId === null || avatarId === '') {
+        console.warn('⚠️ معرف أفاتار غير صالح:', avatarId);
+        // استخدم الصورة الافتراضية الأولى
+        if (AVAILABLE_AVATARS && AVAILABLE_AVATARS.length > 0) {
+          return AVAILABLE_AVATARS[0].src;
+        }
+        return '/images/avatars/hero_icon_8_wake.png'; // صورة افتراضية
+      }
       
-      // طباعة رسالة تصحيح للتأكد من معرف الأفاتار
-      console.log('Getting avatar for ID:', numericId);
+      // ضمان أن avatarId عدد صحيح
+      const numericId = parseInt(avatarId) || 1;
       
       // البحث عن الأفاتار بالمعرف الصحيح
       const avatar = AVAILABLE_AVATARS.find(a => a.id === numericId);
       
       if (avatar) {
-        console.log('Found avatar:', avatar.src);
+        // وجدنا الأفاتار المطلوب
         return avatar.src;
       }
       
       // إذا لم يتم العثور على الصورة، استخدم الصورة الافتراضية
-      console.warn('Avatar not found for ID:', numericId);
+      console.warn('⚠️ أفاتار غير موجود للمعرف:', numericId);
       
       // استخدام الأفاتار الافتراضي الأول إذا كان متاحًا
       if (AVAILABLE_AVATARS && AVAILABLE_AVATARS.length > 0) {
@@ -363,36 +412,51 @@ export default function ChatWindow({ locale }) {
       
       return '/images/avatars/hero_icon_8_wake.png'; // صورة افتراضية
     } catch (error) {
-      console.error('Error getting avatar src:', error);
+      console.error('❌ خطأ في الحصول على مصدر الأفاتار:', error);
       return '/images/avatars/hero_icon_8_wake.png'; // صورة افتراضية في حالة الخطأ
     }
   };
   
-  // الحصول على معلومات المستخدم من الرسالة
+  // الحصول على معلومات المستخدم من الرسالة - تحسين للتعامل مع مشكلة تلخبط الأسماء والصور
   const getUserInfoFromMessage = (msg) => {
-    // التحقق من وجود معرف الأفاتار في الرسالة نفسها أولاً
-    if (msg.senderAvatarId) {
+    // التحقق من وجود معرف userId و senderAvatarId في الرسالة - أعلى أولوية
+    if (msg.userId && msg.senderAvatarId) {
+      // استخدم هذه المعلومات مباشرة من الرسالة - موثوقة وثابتة
       return {
-        avatarId: msg.senderAvatarId,
+        userId: msg.userId,
+        avatarId: parseInt(msg.senderAvatarId) || 1,
         isOnline: true
       };
     }
 
-    // البحث عن المستخدم في قائمة المستخدمين النشطين
-    const activeUser = onlineUsers.find(user => 
-      user.userId === msg.userId || user.nickname === msg.sender
-    );
-    
-    // استخدام بيانات المستخدم النشط إذا وجد
-    if (activeUser && activeUser.avatarId) {
-      return {
-        avatarId: activeUser.avatarId,
-        isOnline: true
-      };
+    // ثاني أعلى أولوية: البحث عن المستخدم في قائمة المستخدمين النشطين باستخدام userId فقط
+    if (msg.userId) {
+      const activeUser = onlineUsers.find(user => user.userId === msg.userId);
+      if (activeUser && activeUser.avatarId) {
+        return {
+          userId: activeUser.userId,
+          avatarId: parseInt(activeUser.avatarId) || 1,
+          isOnline: true
+        };
+      }
     }
     
-    // استخدام القيمة الافتراضية إذا لم يتم العثور على أي معرف أفاتار
+    // ثالث أولوية: البحث باستخدام اسم المستخدم
+    if (msg.sender) {
+      const activeUserByName = onlineUsers.find(user => user.nickname === msg.sender);
+      if (activeUserByName && activeUserByName.avatarId) {
+        return {
+          userId: activeUserByName.userId,
+          avatarId: parseInt(activeUserByName.avatarId) || 1,
+          isOnline: true
+        };
+      }
+    }
+    
+    // إذا وصلنا إلى هنا، استخدم القيمة الافتراضية
+    console.warn('⚠️ استخدام الأفاتار الافتراضي للمستخدم:', msg.sender);
     return {
+      userId: msg.userId || 'unknown',
       avatarId: 1,
       isOnline: false
     };
@@ -411,7 +475,7 @@ export default function ChatWindow({ locale }) {
     }
   };
   
-  // إرسال رسالة جديدة
+  // إرسال رسالة جديدة - محسّن لحل مشكلة تلخبط الأسماء والصور
   const handleSend = async (e) => {
     e.preventDefault();
     
@@ -419,8 +483,7 @@ export default function ChatWindow({ locale }) {
       // التحقق من وجود ملف شخصي للمستخدم
       if (!userProfile.nickname || !userProfile.userId) {
         // توجيه المستخدم لإنشاء ملف شخصي
-        alert('يجب إنشاء ملف شخصي قبل إرسال رسائل. سيتم توجيهك إلى صفحة الملف الشخصي.');
-        window.location.href = '/blog/profile';
+        alert('يجب إنشاء ملف شخصي قبل إرسال رسائل');
         return;
       }
       
@@ -440,82 +503,61 @@ export default function ChatWindow({ locale }) {
       setMessage(''); // مسح مربع الإدخال فوراً لتحسين تجربة المستخدم
       
       try {
-        // طباعة معلومات المستخدم للتأكد من صحة البيانات
-        console.log('User profile before sending message:', {
-          nickname: userProfile.nickname,
-          userId: userProfile.userId,
-          avatarId: userProfile.avatarId
-        });
-        
-        const messageData = {
-          message: currentMessage,
-          sender: userProfile.nickname,
-          userId: userProfile.userId,
-          senderAvatarId: userProfile.avatarId || 1 // ضمان وجود قيمة افتراضية
-        };
-        
-        // إنشاء معرف فريد للرسالة المحلية
-        const localId = `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        
-        // إنشاء رسالة محلية للعرض الفوري
-        const localMessage = {
-          id: localId,
-          ...messageData,
-          timestamp: new Date().toISOString(),
-          interaction: {
-            likes: [],
-            isLiked: false
-          },
-          pending: true // علامة لتمييز الرسائل قيد الإرسال
-        };
-        
-        // إضافة الرسالة محليًا فوراً للتجربة المستخدم الأفضل
-        setMessages(prev => [...prev, localMessage]);
-        
-        try {
-          // محاولة إرسال الرسالة إلى API
-          const response = await fetch('/api/chat/messages', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(messageData),
+        // أرسل الرسالة عبر الاتصال - محسّن لضمان اتساق معلومات المستخدم
+        if (socket && socket.connected) {
+          // تأكد من أن لدينا معلومات المستخدم الأساسية
+          if (!userProfile.nickname) {
+            setError('يجب إعداد اسم المستخدم أولاً');
+            return;
+          }
+          
+          // تأكد من وجود معرف المستخدم الثابت
+          const persistentUserId = localStorage.getItem('persistent_user_id') || userProfile.userId;
+          if (!persistentUserId) {
+            console.error('❌ معرف المستخدم غير موجود!');
+            setError('حدث خطأ في نظام الدردشة. يرجى تحديث الصفحة.');
+            return;
+          }
+          
+          // إنشاء معرف محلي للرسالة لتتبعها قبل التأكيد من الخادم
+          const localId = `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          const avatarId = parseInt(userProfile.avatarId) || 1;
+          
+          console.log('📝 معلومات إرسال الرسالة:', {
+            userId: persistentUserId,
+            nickname: userProfile.nickname,
+            avatarId: avatarId
           });
           
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'فشل في إرسال الرسالة');
-          }
+          // إضافة الرسالة إلى القائمة المحلية فوراً مع كل المعلومات المطلوبة
+          const localMessage = {
+            id: localId,
+            message: currentMessage.trim(),
+            sender: userProfile.nickname,
+            userId: persistentUserId, // استخدم المعرف الثابت
+            timestamp: new Date().toISOString(),
+            senderAvatarId: avatarId, // تأكد من أنه عدد صحيح
+            isLocalMessage: true,
+            pending: true
+          };
           
-          const data = await response.json();
+          setMessages(prev => [...prev, localMessage]);
           
-          if (data.success) {
-            // تحديث الرسالة المحلية بالمعرف الجديد وإزالة علامة pending
-            setMessages(prev => 
-              prev.map(msg => 
-                msg.id === localId ? { ...data.message, pending: false } : msg
-              )
-            );
-          } else {
-            throw new Error(data.error || 'فشل في إرسال الرسالة');
-          }
-        } catch (apiError) {
-          console.error('Error sending message to API:', apiError);
-          
-          // تحديث الرسالة المحلية لإظهار الخطأ
-          setMessages(prev => 
-            prev.map(msg => 
-              msg.id === localId ? { ...msg, pending: false, error: true, errorMessage: apiError.message } : msg
-            )
-          );
-          
-          // إظهار رسالة خطأ صغيرة تحت الرسالة بدلاً من تنبيه
-          console.error(`فشل في إرسال الرسالة: ${apiError.message}`);
+          // إرسال الرسالة عبر الاتصال مع جميع المعلومات المطلوبة
+          socket.emit('send-message', {
+            message: currentMessage.trim(),
+            sender: userProfile.nickname,
+            userId: persistentUserId, // استخدم المعرف الثابت
+            senderAvatarId: avatarId // إضافة معرف الأفاتار بشكل صريح
+          });
+        } else {
+          console.error('❌ لا يوجد اتصال للدردشة');
+          setError('فشل الاتصال بخادم الدردشة. يرجى تحديث الصفحة.');
         }
       } catch (error) {
-        console.error('Error in handleSend:', error);
+        console.error('❌ خطأ في إرسال الرسالة:', error);
         // إظهار رسالة خطأ فقط في حالة فشل العملية بالكامل
-        alert(`حدث خطأ: ${error.message}`);
+        setError(`حدث خطأ: ${error.message}`);
       }
     }
   };
