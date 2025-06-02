@@ -148,7 +148,12 @@ export default function CastlesPage() {
   
   // حالة تصفية القلاع
   const [levelFilter, setLevelFilter] = useState<number | null>(null);
+  const [priceRange, setPriceRange] = useState<{min: number | null, max: number | null}>({min: null, max: null});
+  const [strengthRange, setStrengthRange] = useState<{min: number | null, max: number | null}>({min: null, max: null});
+  const [featureFilter, setFeatureFilter] = useState<string | null>(null);
+  const [showPopularOnly, setShowPopularOnly] = useState<boolean>(false);
   const [sortBy, setSortBy] = useState<string>('level');
+  const [isFilterOpen, setIsFilterOpen] = useState<boolean>(true);
   
   // حالة النافذة المنبثقة
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -281,10 +286,20 @@ export default function CastlesPage() {
   // تصفية وترتيب القلاع
   const filteredCastles = castles
     .filter(castle => levelFilter === null || castle.level === levelFilter)
+    .filter(castle => !priceRange.min || castle.price >= priceRange.min)
+    .filter(castle => !priceRange.max || castle.price <= priceRange.max)
+    .filter(castle => !strengthRange.min || castle.strength >= strengthRange.min)
+    .filter(castle => !strengthRange.max || castle.strength <= strengthRange.max)
+    .filter(castle => !featureFilter || castle.features.some(feature => 
+      feature.toLowerCase().includes(featureFilter.toLowerCase())))
+    .filter(castle => !showPopularOnly || castle.popular)
     .sort((a, b) => {
       if (sortBy === 'level') return b.level - a.level;
+      if (sortBy === 'level-asc') return a.level - b.level;
       if (sortBy === 'strength') return b.strength - a.strength;
+      if (sortBy === 'strength-asc') return a.strength - b.strength;
       if (sortBy === 'price') return b.price - a.price;
+      if (sortBy === 'price-asc') return a.price - b.price;
       return 0;
     });
     
@@ -334,45 +349,257 @@ export default function CastlesPage() {
                style={{ backgroundImage: 'url("/bg244_LE_upscale_balanced_x4.jpg")', opacity: 0.4, filter: 'brightness(1.1) contrast(1.1)' }}>
           </div>
           <div className="relative z-10">
-          <h2 className="text-xl font-bold mb-4">{getLocalizedText('filters')}</h2>
-          <div className="flex flex-wrap gap-6">
-            <div className="flex-1 min-w-[200px]">
-              <label className="block text-gray-700 mb-2">
-                {getLocalizedText('level')}
-              </label>
-              <select 
-                className="w-full p-2 border border-gray-300 rounded-md"
-                value={levelFilter === null ? '' : levelFilter}
-                onChange={(e) => setLevelFilter(e.target.value === '' ? null : Number(e.target.value))}
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">التصفية</h2>
+              <button 
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors flex items-center"
               >
-                <option value="">{getLocalizedText('all_levels')}</option>
-                <option value="12">12</option>
-                <option value="18">18</option>
-                <option value="22">22</option>
-                <option value="30">30</option>
-                <option value="1">1★</option>
-                <option value="2">2★</option>
-                <option value="3">3★</option>
-                <option value="4">4★</option>
-                <option value="5">5★</option>
-              </select>
+                {isFilterOpen ? 'إخفاء الفلاتر' : 'عرض الفلاتر'}
+                <span className="mr-2">{isFilterOpen ? '▲' : '▼'}</span>
+              </button>
             </div>
             
-            <div className="flex-1 min-w-[200px]">
-              <label className="block text-gray-700 mb-2">
-                {getLocalizedText('sort_by')}
-              </label>
-              <select 
-                className="w-full p-2 border border-gray-300 rounded-md"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-              >
-                <option value="level">{getLocalizedText('level')}</option>
-                <option value="strength">{getLocalizedText('strength')}</option>
-                <option value="price">{getLocalizedText('price')}</option>
-              </select>
+            <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isFilterOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6 p-4 bg-white bg-opacity-70 rounded-lg shadow-sm">
+                {/* Level Filter */}
+                <div>
+                  <label className="block text-gray-700 font-medium mb-2">
+                    {getLocalizedText('level')}
+                  </label>
+                  <select 
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    value={levelFilter === null ? '' : levelFilter}
+                    onChange={(e) => setLevelFilter(e.target.value === '' ? null : Number(e.target.value))}
+                  >
+                    <option value="">{getLocalizedText('all_levels')}</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12">12</option>
+                    <option value="13">13</option>
+                    <option value="14">14</option>
+                    <option value="15">15</option>
+                    <option value="16">16</option>
+                    <option value="17">17</option>
+                    <option value="18">18</option>
+                    <option value="19">19</option>
+                    <option value="20">20</option>
+                    <option value="21">21</option>
+                    <option value="22">22</option>
+                    <option value="23">23</option>
+                    <option value="24">24</option>
+                    <option value="25">25</option>
+                    <option value="26">26</option>
+                    <option value="27">27</option>
+                    <option value="28">28</option>
+                    <option value="29">29</option>
+                    <option value="30">30</option>
+                    <option value="31">31</option>
+                    <option value="32">32</option>
+                    <option value="33">33</option>
+                    <option value="34">34</option>
+                    <option value="35">35</option>
+                  </select>
+                </div>
+                
+                {/* Price Range Filter */}
+                <div>
+                  <label className="block text-gray-700 font-medium mb-2">نطاق السعر:</label>
+                  <div className="flex space-x-2 items-center">
+                    <input 
+                      type="number" 
+                      placeholder="الحد الأدنى" 
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      value={priceRange.min !== null ? priceRange.min : ''}
+                      onChange={(e) => setPriceRange({...priceRange, min: e.target.value ? Number(e.target.value) : null})}
+                    />
+                    <span className="px-2">-</span>
+                    <input 
+                      type="number" 
+                      placeholder="الحد الأقصى" 
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      value={priceRange.max !== null ? priceRange.max : ''}
+                      onChange={(e) => setPriceRange({...priceRange, max: e.target.value ? Number(e.target.value) : null})}
+                    />
+                  </div>
+                </div>
+                
+                {/* Strength Range Filter */}
+                <div>
+                  <label className="block text-gray-700 font-medium mb-2">نطاق القوة:</label>
+                  <div className="flex space-x-2 items-center">
+                    <input 
+                      type="number" 
+                      placeholder="الحد الأدنى" 
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      value={strengthRange.min !== null ? strengthRange.min : ''}
+                      onChange={(e) => setStrengthRange({...strengthRange, min: e.target.value ? Number(e.target.value) : null})}
+                    />
+                    <span className="px-2">-</span>
+                    <input 
+                      type="number" 
+                      placeholder="الحد الأقصى" 
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      value={strengthRange.max !== null ? strengthRange.max : ''}
+                      onChange={(e) => setStrengthRange({...strengthRange, max: e.target.value ? Number(e.target.value) : null})}
+                    />
+                  </div>
+                </div>
+                
+                {/* Feature Filter */}
+                <div>
+                  <label className="block text-gray-700 font-medium mb-2">البحث عن ميزة:</label>
+                  <input 
+                    type="text" 
+                    placeholder="أدخل كلمة للبحث في الميزات" 
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    value={featureFilter !== null ? featureFilter : ''}
+                    onChange={(e) => setFeatureFilter(e.target.value || null)}
+                  />
+                </div>
+                
+                {/* Popular Only Filter */}
+                <div className="flex items-center mt-8">
+                  <input 
+                    type="checkbox" 
+                    id="popularOnly" 
+                    className="w-5 h-5 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
+                    checked={showPopularOnly}
+                    onChange={(e) => setShowPopularOnly(e.target.checked)}
+                  />
+                  <label htmlFor="popularOnly" className="mr-2 text-gray-700">
+                    القلاع الشائعة فقط
+                  </label>
+                </div>
+                
+                {/* Sort By */}
+                <div>
+                  <label className="block text-gray-700 font-medium mb-2">
+                    {getLocalizedText('sort_by')}
+                  </label>
+                  <select 
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                  >
+                    <option value="level">{getLocalizedText('level')} (تنازلي)</option>
+                    <option value="level-asc">{getLocalizedText('level')} (تصاعدي)</option>
+                    <option value="strength">{getLocalizedText('strength')} (تنازلي)</option>
+                    <option value="strength-asc">{getLocalizedText('strength')} (تصاعدي)</option>
+                    <option value="price">{getLocalizedText('price')} (تنازلي)</option>
+                    <option value="price-asc">{getLocalizedText('price')} (تصاعدي)</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="flex justify-end mb-4">
+                <button 
+                  onClick={() => {
+                    setLevelFilter(null);
+                    setPriceRange({min: null, max: null});
+                    setStrengthRange({min: null, max: null});
+                    setFeatureFilter(null);
+                    setShowPopularOnly(false);
+                    setSortBy('level');
+                  }}
+                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition-colors ml-2"
+                >
+                  إعادة ضبط الفلاتر
+                </button>
+              </div>
             </div>
-          </div>
+            
+            {/* Filter Indicators */}
+            <div className="flex flex-wrap gap-2 mt-2">
+              {levelFilter !== null && (
+                <div className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm flex items-center">
+                  المستوى: {levelFilter}
+                  <button 
+                    className="mr-2 text-amber-800 hover:text-amber-900" 
+                    onClick={() => setLevelFilter(null)}
+                  >×</button>
+                </div>
+              )}
+              {priceRange.min !== null && (
+                <div className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm flex items-center">
+                  السعر من: ${priceRange.min}
+                  <button 
+                    className="mr-2 text-amber-800 hover:text-amber-900" 
+                    onClick={() => setPriceRange({...priceRange, min: null})}
+                  >×</button>
+                </div>
+              )}
+              {priceRange.max !== null && (
+                <div className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm flex items-center">
+                  السعر حتى: ${priceRange.max}
+                  <button 
+                    className="mr-2 text-amber-800 hover:text-amber-900" 
+                    onClick={() => setPriceRange({...priceRange, max: null})}
+                  >×</button>
+                </div>
+              )}
+              {strengthRange.min !== null && (
+                <div className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm flex items-center">
+                  القوة من: {strengthRange.min}
+                  <button 
+                    className="mr-2 text-amber-800 hover:text-amber-900" 
+                    onClick={() => setStrengthRange({...strengthRange, min: null})}
+                  >×</button>
+                </div>
+              )}
+              {strengthRange.max !== null && (
+                <div className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm flex items-center">
+                  القوة حتى: {strengthRange.max}
+                  <button 
+                    className="mr-2 text-amber-800 hover:text-amber-900" 
+                    onClick={() => setStrengthRange({...strengthRange, max: null})}
+                  >×</button>
+                </div>
+              )}
+              {featureFilter !== null && (
+                <div className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm flex items-center">
+                  ميزة: {featureFilter}
+                  <button 
+                    className="mr-2 text-amber-800 hover:text-amber-900" 
+                    onClick={() => setFeatureFilter(null)}
+                  >×</button>
+                </div>
+              )}
+              {showPopularOnly && (
+                <div className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm flex items-center">
+                  القلاع الشائعة فقط
+                  <button 
+                    className="mr-2 text-amber-800 hover:text-amber-900" 
+                    onClick={() => setShowPopularOnly(false)}
+                  >×</button>
+                </div>
+              )}
+              {(levelFilter !== null || priceRange.min !== null || priceRange.max !== null || 
+               strengthRange.min !== null || strengthRange.max !== null || 
+               featureFilter !== null || showPopularOnly) && (
+                <button 
+                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1 rounded-full text-sm"
+                  onClick={() => {
+                    setLevelFilter(null);
+                    setPriceRange({min: null, max: null});
+                    setStrengthRange({min: null, max: null});
+                    setFeatureFilter(null);
+                    setShowPopularOnly(false);
+                  }}
+                >
+                  مسح الكل
+                </button>
+              )}
+            </div>
           </div>
         </div>
         
