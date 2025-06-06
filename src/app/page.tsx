@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import getTranslation from '@/lib/i18n';
 import ChatSection from '@/components/chat/ChatSection';
 import ClientButtonsLayout from '@/components/ClientButtonsLayout';
@@ -77,12 +77,12 @@ const testimonials = [
   },
 ];
 
-export default function Home() {
-  // استخدام اللغة العربية فقط
-  const locale = 'ar';
-  const t = getTranslation(locale);
-  const isRTL = true;
-  const searchParams = useSearchParams();
+// مكون منفصل يستخدم useSearchParams
+"use client";
+import { useSearchParams as useNextSearchParams } from "next/navigation";
+
+function ReferralHandler() {
+  const searchParams = useNextSearchParams();
   const router = useRouter();
   
   // معالجة روابط الإحالة تلقائياً عند فتح الموقع
@@ -132,8 +132,22 @@ export default function Home() {
     }
   };
   
+  return null; // هذا المكون لا يعرض أي واجهة، فقط يعالج الإحالة
+}
+
+export default function Home() {
+  // استخدام اللغة العربية فقط
+  const locale = 'ar';
+  const t = getTranslation(locale);
+  const isRTL = true;
+  
   return (
     <div className={`min-h-screen ${isRTL ? 'rtl' : 'ltr'}`}>
+      {/* تغليف معالج الإحالة في Suspense */}
+      <Suspense fallback={null}>
+        <ReferralHandler />
+      </Suspense>
+      
       {/* زر مسابقة الإحالة الدائري المميز - في أعلى يمين الصفحة */}
       <Link 
         href="/competitions" 
