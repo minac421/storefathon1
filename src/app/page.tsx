@@ -1,5 +1,9 @@
+"use client";
+
+import { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import getTranslation from '@/lib/i18n';
 import ChatSection from '@/components/chat/ChatSection';
 import ClientButtonsLayout from '@/components/ClientButtonsLayout';
@@ -78,6 +82,55 @@ export default function Home() {
   const locale = 'ar';
   const t = getTranslation(locale);
   const isRTL = true;
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  
+  // معالجة روابط الإحالة تلقائياً عند فتح الموقع
+  useEffect(() => {
+    const ref = searchParams.get('ref');
+    if (ref) {
+      // تسجيل الإحالة مباشرة دون الحاجة للتسجيل
+      handleDirectReferral(ref);
+    }
+  }, [searchParams]);
+  
+  // دالة لتسجيل الإحالة مباشرة
+  const handleDirectReferral = async (referrerCode) => {
+    try {
+      // التحقق من عدم تكرار تسجيل نفس الإحالة
+      const processedReferrals = localStorage.getItem('processed-referrals') || '[]';
+      const processedArray = JSON.parse(processedReferrals);
+      
+      if (!processedArray.includes(referrerCode)) {
+        // طلب API لتسجيل الإحالة
+        const response = await fetch('/api/contest/refer', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            referrerCastleIP: referrerCode
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          // تسجيل أن هذا الرمز قد تمت معالجته
+          processedArray.push(referrerCode);
+          localStorage.setItem('processed-referrals', JSON.stringify(processedArray));
+          
+          // إظهار إشعار نجاح الإحالة (اختياري)
+          alert("تم تسجيل الإحالة بنجاح! شكراً لزيارتك موقعنا.");
+          
+          // إزالة معلمة الإحالة من الرابط للتنظيف
+          router.push('/');
+        }
+      }
+    } catch (error) {
+      console.error('خطأ في تسجيل الإحالة:', error);
+    }
+  };
   
   return (
     <div className={`min-h-screen ${isRTL ? 'rtl' : 'ltr'}`}>
