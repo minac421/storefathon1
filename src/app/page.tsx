@@ -81,6 +81,24 @@ export default function Home() {
   
   return (
     <div className={`min-h-screen ${isRTL ? 'rtl' : 'ltr'}`}>
+      {/* زر مسابقة الإحالة الدائري المميز - في أعلى يمين الصفحة */}
+      <Link 
+        href="/competitions" 
+        className="fixed top-20 md:top-24 right-4 md:right-8 z-50 group"
+        aria-label="مسابقة الإحالة"
+      >
+        <div className="relative">
+          <div className="absolute inset-0 rounded-full bg-gradient-to-r from-yellow-400 to-amber-600 shadow-xl opacity-80 animate-pulse blur-sm group-hover:blur-md group-hover:opacity-100 transition-all duration-300"></div>
+          <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-r from-yellow-500 to-amber-500 rounded-full flex flex-col items-center justify-center shadow-lg relative z-10 border-2 border-white/80 transform transition-transform duration-300 group-hover:scale-110">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 md:h-8 md:w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-white text-[10px] md:text-xs font-bold mt-1">المسابقة</span>
+          </div>
+        </div>
+        <div className="absolute top-0 left-0 bg-red-500 text-white text-[8px] md:text-xs font-bold rounded-full px-2 py-1 transform -translate-x-1/4 -translate-y-1/4 animate-bounce">جديد!</div>
+      </Link>
+
       {/* Hero Banner - with conqueror hero image as full background */}
       <section className="relative h-[80vh] md:h-[85vh] flex items-center text-white overflow-hidden">
         {/* صورة الخلفية مع تحسين التوافق مع مختلف الأجهزة */}
@@ -103,25 +121,25 @@ export default function Home() {
             
             {/* أزرار الصفحة الرئيسية */}
             <div className="flex justify-center items-center flex-wrap">
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link 
-                href={`/services`} 
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg text-lg font-bold transition-all hover:scale-105 shadow-lg"
-              >
-                استكشف خدماتنا
-              </Link>
-              <Link 
-                href={`/castles`} 
-                className="bg-amber-600 hover:bg-amber-700 text-white px-8 py-4 rounded-lg text-lg font-bold transition-all hover:scale-105 shadow-lg"
-              >
-                استعرض القلاع
-              </Link>
-              <Link 
-                href={`/blog`} 
-                className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-lg text-lg font-bold transition-all hover:scale-105 shadow-lg"
-              >
-                شارك بطولاتك
-              </Link>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link 
+                  href={`/services`} 
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg text-lg font-bold transition-all hover:scale-105 shadow-lg"
+                >
+                  استكشف خدماتنا
+                </Link>
+                <Link 
+                  href={`/castles`} 
+                  className="bg-amber-600 hover:bg-amber-700 text-white px-8 py-4 rounded-lg text-lg font-bold transition-all hover:scale-105 shadow-lg"
+                >
+                  استعرض القلاع
+                </Link>
+                <Link 
+                  href={`/blog`} 
+                  className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-lg text-lg font-bold transition-all hover:scale-105 shadow-lg"
+                >
+                  شارك بطولاتك
+                </Link>
               </div>
             </div>
           </div>
