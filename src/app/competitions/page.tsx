@@ -18,6 +18,14 @@ export default function ReferralContest() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [registrationError, setRegistrationError] = useState("");
 
+  // إضافة تايمر للمسابقة
+  const [timeRemaining, setTimeRemaining] = useState({
+    days: 10,
+    hours: 0,
+    minutes: 0,
+    seconds: 0
+  });
+
   // قائمة الصور الرمزية المتاحة للاختيار
   const avatars = [
     { id: 1, src: "/images/avatars/avatar1.png" },
@@ -38,6 +46,40 @@ export default function ReferralContest() {
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // إضافة مؤقت تنازلي للمسابقة
+  useEffect(() => {
+    if (!isClient) return;
+
+    // تاريخ انتهاء المسابقة (10 أيام من الآن)
+    const endDate = new Date();
+    endDate.setDate(endDate.getDate() + 10);
+
+    const updateTimer = () => {
+      const now = new Date();
+      const diff = endDate.getTime() - now.getTime();
+      
+      if (diff <= 0) {
+        // انتهت المسابقة
+        setTimeRemaining({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        return;
+      }
+      
+      // حساب الوقت المتبقي
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      
+      setTimeRemaining({ days, hours, minutes, seconds });
+    };
+    
+    // تحديث المؤقت كل ثانية
+    const timerInterval = setInterval(updateTimer, 1000);
+    updateTimer(); // تحديث أولي
+    
+    return () => clearInterval(timerInterval);
+  }, [isClient]);
 
   useEffect(() => {
     // التحقق من وجود بيانات تسجيل سابقة في التخزين المحلي
@@ -239,67 +281,140 @@ export default function ReferralContest() {
   return (
     <>
       <div className="container mx-auto px-4 py-6 md:py-10 max-w-6xl">
-        {/* شرح المسابقة */}
-        <div className="bg-white rounded-lg shadow-lg p-5 md:p-8 mb-6 md:mb-10">
+        {/* العنوان والتايمر */}
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-lg p-5 md:p-8 mb-6 md:mb-10 text-white">
           <h1 className="text-2xl md:text-4xl font-bold mb-4 md:mb-6 text-center">مسابقة الدعوة والإحالة</h1>
-          <p className="text-base md:text-lg text-gray-700 mb-4 md:mb-6 leading-relaxed">
+          
+          {/* تايمر العد التنازلي */}
+          <div className="flex justify-center mb-4">
+            <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3 md:p-4 inline-flex">
+              <div className="flex flex-row-reverse gap-2 md:gap-4">
+                <div className="text-center w-16 md:w-20">
+                  <div className="bg-white/20 rounded-lg p-2">
+                    <div className="text-2xl md:text-4xl font-bold">{timeRemaining.days}</div>
+                  </div>
+                  <div className="text-xs md:text-sm mt-1">أيام</div>
+                </div>
+                <div className="text-center w-16 md:w-20">
+                  <div className="bg-white/20 rounded-lg p-2">
+                    <div className="text-2xl md:text-4xl font-bold">{timeRemaining.hours}</div>
+                  </div>
+                  <div className="text-xs md:text-sm mt-1">ساعات</div>
+                </div>
+                <div className="text-center w-16 md:w-20">
+                  <div className="bg-white/20 rounded-lg p-2">
+                    <div className="text-2xl md:text-4xl font-bold">{timeRemaining.minutes}</div>
+                  </div>
+                  <div className="text-xs md:text-sm mt-1">دقائق</div>
+                </div>
+                <div className="text-center w-16 md:w-20">
+                  <div className="bg-white/20 rounded-lg p-2">
+                    <div className="text-2xl md:text-4xl font-bold">{timeRemaining.seconds}</div>
+                  </div>
+                  <div className="text-xs md:text-sm mt-1">ثواني</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <p className="text-base md:text-lg text-white/90 mb-4 md:mb-6 leading-relaxed">
             انضم إلى مسابقتنا المميزة لزيادة متابعي الموقع! ببساطة، كل ما عليك فعله هو دعوة أصدقائك للانضمام إلى موقعنا باستخدام رابط الإحالة الخاص بك. كلما زاد عدد الأشخاص الذين ينضمون عبر رابطك، زادت فرصتك في الفوز بإحدى الجوائز القيمة!
           </p>
           <div className="flex flex-col md:flex-row flex-wrap gap-3 md:gap-5 justify-center">
-            <div className="bg-blue-50 rounded-lg p-3 md:p-4 flex items-center max-w-xs w-full">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-500 text-white rounded-full flex items-center justify-center text-lg md:text-xl font-bold ml-3 md:mr-4 shrink-0">1</div>
+            <div className="bg-white/10 rounded-lg p-3 md:p-4 flex items-center max-w-xs w-full backdrop-blur-sm">
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-white text-blue-600 rounded-full flex items-center justify-center text-lg md:text-xl font-bold ml-3 md:mr-4 shrink-0">1</div>
               <div>
-                <p className="font-semibold text-blue-700 text-sm md:text-base">أدخل آي بي قلعتك واسمك</p>
+                <p className="font-semibold text-white text-sm md:text-base">أدخل آي بي قلعتك واسمك</p>
               </div>
             </div>
-            <div className="bg-blue-50 rounded-lg p-3 md:p-4 flex items-center max-w-xs w-full">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-500 text-white rounded-full flex items-center justify-center text-lg md:text-xl font-bold ml-3 md:mr-4 shrink-0">2</div>
+            <div className="bg-white/10 rounded-lg p-3 md:p-4 flex items-center max-w-xs w-full backdrop-blur-sm">
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-white text-blue-600 rounded-full flex items-center justify-center text-lg md:text-xl font-bold ml-3 md:mr-4 shrink-0">2</div>
               <div>
-                <p className="font-semibold text-blue-700 text-sm md:text-base">شارك الرابط مع أصدقائك</p>
+                <p className="font-semibold text-white text-sm md:text-base">شارك الرابط مع أصدقائك</p>
               </div>
             </div>
-            <div className="bg-blue-50 rounded-lg p-3 md:p-4 flex items-center max-w-xs w-full">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-500 text-white rounded-full flex items-center justify-center text-lg md:text-xl font-bold ml-3 md:mr-4 shrink-0">3</div>
+            <div className="bg-white/10 rounded-lg p-3 md:p-4 flex items-center max-w-xs w-full backdrop-blur-sm">
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-white text-blue-600 rounded-full flex items-center justify-center text-lg md:text-xl font-bold ml-3 md:mr-4 shrink-0">3</div>
               <div>
-                <p className="font-semibold text-blue-700 text-sm md:text-base">اربح جوائز قيمة</p>
+                <p className="font-semibold text-white text-sm md:text-base">اربح جوائز قيمة</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* الجوائز - تم نقلها إلى الأعلى للإغراء */}
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden mb-6 md:mb-10 animate-pulse">
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 md:p-5">
+        {/* الجوائز - تحديث الجوائز حسب الطلب */}
+        <div className="bg-white rounded-lg shadow-xl overflow-hidden mb-6 md:mb-10">
+          <div className="bg-gradient-to-r from-amber-500 to-amber-700 text-white p-4 md:p-5">
             <h2 className="text-lg md:text-2xl font-bold">الجوائز</h2>
             <p className="text-xs md:text-sm opacity-90">فرصتك للفوز بجوائز قيمة حصرية</p>
           </div>
-          <div className="p-4 md:p-5 bg-gradient-to-b from-blue-50 to-white">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-6">
-              <div className="bg-gradient-to-b from-yellow-50 to-yellow-100 p-3 md:p-5 rounded-lg border border-yellow-300 text-center shadow-lg transform hover:scale-105 transition-transform duration-300 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-20 h-20 bg-yellow-400 rotate-45 translate-x-6 -translate-y-6 opacity-30"></div>
-                <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white rounded-full text-lg md:text-2xl font-bold mb-3 md:mb-4 shadow-md">1</div>
-                <h3 className="text-base md:text-xl font-bold mb-2 md:mb-3 text-yellow-700">المركز الأول</h3>
-                <div className="text-xl md:text-3xl font-extrabold text-yellow-600 mb-2 md:mb-3 animate-pulse">4 شهور بوت</div>
-                <div className="inline-block bg-yellow-500 text-white text-xs md:text-sm px-3 py-1 rounded-full font-bold animate-bounce">الجائزة الكبرى</div>
+          <div className="p-4 md:p-6 bg-gradient-to-b from-amber-50 to-white">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
+              <div className="bg-gradient-to-b from-yellow-50 to-yellow-100 p-4 md:p-6 rounded-lg border-2 border-yellow-300 text-center shadow-xl transform transition-all duration-500 hover:scale-105 hover:shadow-2xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-full h-full bg-yellow-400 opacity-10 transform scale-0 group-hover:scale-100 transition-transform duration-700 origin-bottom-left rounded-full"></div>
+                <div className="inline-flex items-center justify-center w-14 h-14 md:w-20 md:h-20 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white rounded-full text-xl md:text-3xl font-bold mb-3 md:mb-4 shadow-lg transform transition-transform duration-500 group-hover:rotate-12">1</div>
+                <h3 className="text-lg md:text-2xl font-bold mb-2 md:mb-3 text-yellow-800">المركز الأول</h3>
+                <ul className="space-y-2 mb-4 text-left rtl:text-right">
+                  <li className="flex items-center text-yellow-700 font-semibold">
+                    <svg className="w-5 h-5 ml-2 text-yellow-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" fillRule="evenodd"></path></svg>
+                    بوت لمدة 4 شهور
+                  </li>
+                  <li className="flex items-center text-yellow-700 font-semibold">
+                    <svg className="w-5 h-5 ml-2 text-yellow-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" fillRule="evenodd"></path></svg>
+                    حزمة 10$ (كريديت)
+                  </li>
+                  <li className="flex items-center text-yellow-700 font-semibold">
+                    <svg className="w-5 h-5 ml-2 text-yellow-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" fillRule="evenodd"></path></svg>
+                    5 مليار قمح
+                  </li>
+                </ul>
+                <div className="inline-block bg-yellow-500 text-white text-sm px-4 py-2 rounded-full font-bold animate-pulse">الجائزة الكبرى</div>
+                <div className="absolute -top-10 -right-10 w-20 h-20 bg-yellow-300 opacity-50 rounded-full blur-xl animate-pulse"></div>
+                <div className="absolute -bottom-10 -left-10 w-20 h-20 bg-yellow-300 opacity-50 rounded-full blur-xl animate-pulse delay-700"></div>
               </div>
-              <div className="bg-gradient-to-b from-gray-50 to-gray-100 p-3 md:p-5 rounded-lg border border-gray-300 text-center shadow-lg transform hover:scale-105 transition-transform duration-300 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-20 h-20 bg-gray-400 rotate-45 translate-x-6 -translate-y-6 opacity-30"></div>
-                <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-gray-400 to-gray-500 text-white rounded-full text-lg md:text-2xl font-bold mb-3 md:mb-4 shadow-md">2</div>
-                <h3 className="text-base md:text-xl font-bold mb-2 md:mb-3 text-gray-700">المركز الثاني</h3>
-                <div className="text-xl md:text-3xl font-extrabold text-gray-600 mb-2 md:mb-3">3 شهور بوت</div>
-                <div className="inline-block bg-gray-500 text-white text-xs md:text-sm px-3 py-1 rounded-full font-bold">جائزة مميزة</div>
+              
+              <div className="bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-6 rounded-lg border-2 border-gray-300 text-center shadow-xl transform transition-all duration-500 hover:scale-105 hover:shadow-2xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-full h-full bg-gray-400 opacity-10 transform scale-0 group-hover:scale-100 transition-transform duration-700 origin-bottom-left rounded-full"></div>
+                <div className="inline-flex items-center justify-center w-14 h-14 md:w-20 md:h-20 bg-gradient-to-r from-gray-400 to-gray-600 text-white rounded-full text-xl md:text-3xl font-bold mb-3 md:mb-4 shadow-lg transform transition-transform duration-500 group-hover:rotate-12">2</div>
+                <h3 className="text-lg md:text-2xl font-bold mb-2 md:mb-3 text-gray-800">المركز الثاني</h3>
+                <ul className="space-y-2 mb-4 text-left rtl:text-right">
+                  <li className="flex items-center text-gray-700 font-semibold">
+                    <svg className="w-5 h-5 ml-2 text-gray-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" fillRule="evenodd"></path></svg>
+                    بوت لمدة 4 شهور
+                  </li>
+                  <li className="flex items-center text-gray-700 font-semibold">
+                    <svg className="w-5 h-5 ml-2 text-gray-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" fillRule="evenodd"></path></svg>
+                    5 مليار قمح
+                  </li>
+                </ul>
+                <div className="inline-block bg-gray-500 text-white text-sm px-4 py-2 rounded-full font-bold">جائزة مميزة</div>
+                <div className="absolute -top-10 -right-10 w-20 h-20 bg-gray-300 opacity-50 rounded-full blur-xl animate-pulse"></div>
+                <div className="absolute -bottom-10 -left-10 w-20 h-20 bg-gray-300 opacity-50 rounded-full blur-xl animate-pulse delay-700"></div>
               </div>
-              <div className="bg-gradient-to-b from-amber-50 to-amber-100 p-3 md:p-5 rounded-lg border border-amber-300 text-center shadow-lg transform hover:scale-105 transition-transform duration-300 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-20 h-20 bg-amber-500 rotate-45 translate-x-6 -translate-y-6 opacity-30"></div>
-                <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-full text-lg md:text-2xl font-bold mb-3 md:mb-4 shadow-md">3</div>
-                <h3 className="text-base md:text-xl font-bold mb-2 md:mb-3 text-amber-800">المركز الثالث</h3>
-                <div className="text-xl md:text-3xl font-extrabold text-amber-700 mb-2 md:mb-3">شهرين بوت</div>
-                <div className="inline-block bg-amber-600 text-white text-xs md:text-sm px-3 py-1 rounded-full font-bold">جائزة رائعة</div>
+              
+              <div className="bg-gradient-to-b from-amber-50 to-amber-100 p-4 md:p-6 rounded-lg border-2 border-amber-300 text-center shadow-xl transform transition-all duration-500 hover:scale-105 hover:shadow-2xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-full h-full bg-amber-500 opacity-10 transform scale-0 group-hover:scale-100 transition-transform duration-700 origin-bottom-left rounded-full"></div>
+                <div className="inline-flex items-center justify-center w-14 h-14 md:w-20 md:h-20 bg-gradient-to-r from-amber-600 to-amber-800 text-white rounded-full text-xl md:text-3xl font-bold mb-3 md:mb-4 shadow-lg transform transition-transform duration-500 group-hover:rotate-12">3</div>
+                <h3 className="text-lg md:text-2xl font-bold mb-2 md:mb-3 text-amber-800">المركز الثالث</h3>
+                <ul className="space-y-2 mb-4 text-left rtl:text-right">
+                  <li className="flex items-center text-amber-700 font-semibold">
+                    <svg className="w-5 h-5 ml-2 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" fillRule="evenodd"></path></svg>
+                    بوت لمدة شهرين
+                  </li>
+                  <li className="flex items-center text-amber-700 font-semibold">
+                    <svg className="w-5 h-5 ml-2 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" fillRule="evenodd"></path></svg>
+                    5 مليار قمح
+                  </li>
+                </ul>
+                <div className="inline-block bg-amber-600 text-white text-sm px-4 py-2 rounded-full font-bold">جائزة رائعة</div>
+                <div className="absolute -top-10 -right-10 w-20 h-20 bg-amber-300 opacity-50 rounded-full blur-xl animate-pulse"></div>
+                <div className="absolute -bottom-10 -left-10 w-20 h-20 bg-amber-300 opacity-50 rounded-full blur-xl animate-pulse delay-700"></div>
               </div>
             </div>
+            
             <div className="mt-6 text-center">
               <p className="text-sm md:text-base text-gray-700 font-semibold">لا تفوت فرصتك! قم بدعوة أصدقائك الآن للمشاركة في المسابقة والفوز بجوائز حصرية</p>
-              <div className="mt-2 text-xs md:text-sm text-blue-600">* البوت يوفر مميزات حصرية للاعبين ويساعدك على التفوق في اللعبة</div>
+              <div className="mt-3 inline-block text-sm text-white font-semibold bg-gradient-to-r from-blue-500 to-blue-700 px-4 py-2 rounded-full shadow-md animate-pulse">المسابقة متاحة لمدة 10 أيام فقط</div>
             </div>
           </div>
         </div>

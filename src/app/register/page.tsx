@@ -66,7 +66,7 @@ const Register = () => {
       setCastleIP('');
       
       setTimeout(() => {
-        router.push('/competitions');
+        router.push('/');
       }, 2000);
     } catch (err) {
       setError(err.message || 'حدث خطأ أثناء التسجيل');
@@ -207,8 +207,8 @@ const Register = () => {
           )}
           
           <div className="text-center mt-4">
-            <Link href="/competitions" className="text-blue-600 hover:underline">
-              الذهاب إلى صفحة المسابقات مباشرة
+            <Link href="/" className="text-blue-600 hover:underline">
+              الذهاب إلى الصفحة الرئيسية
             </Link>
           </div>
         </form>
