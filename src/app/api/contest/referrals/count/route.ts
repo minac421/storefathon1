@@ -1,18 +1,9 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { MongoClient } from 'mongodb';
 
-// مسار ملف قاعدة البيانات
-const dbPath = path.join(process.cwd(), 'contest-db.json');
-
-// قراءة قاعدة البيانات
-const readDb = () => {
-  if (!fs.existsSync(dbPath)) {
-    return { participants: [], referrals: [] };
-  }
-  const data = fs.readFileSync(dbPath, 'utf-8');
-  return JSON.parse(data);
-};
+// رابط الاتصال بقاعدة البيانات MongoDB
+const uri = "mongodb+srv://minaadelc4:cHjkStQnKuh91sNt@storefathone.a42qbk5.mongodb.net/storefathon?retryWrites=true&w=majority&appName=storefathone";
+const client = new MongoClient(uri);
 
 export async function GET(request) {
   try {
@@ -27,11 +18,13 @@ export async function GET(request) {
       }, { status: 400 });
     }
     
-    // قراءة بيانات المشاركين من قاعدة البيانات
-    const db = readDb();
+    // الاتصال بقاعدة البيانات
+    await client.connect();
+    const database = client.db('storefathon');
+    const participantsCollection = database.collection('participants');
     
     // البحث عن المستخدم
-    const participant = db.participants.find(p => p.castleIP === castleIP);
+    const participant = await participantsCollection.findOne({ castleIP });
     
     if (!participant) {
       return NextResponse.json({ 
@@ -51,5 +44,8 @@ export async function GET(request) {
       success: false, 
       message: 'حدث خطأ أثناء جلب عدد الإحالات: ' + (error.message || 'خطأ غير معروف')
     }, { status: 500 });
+  } finally {
+    // إغلاق الاتصال بقاعدة البيانات
+    await client.close();
   }
-} 
+}

@@ -1,18 +1,9 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { MongoClient } from 'mongodb';
 
-// مسار ملف قاعدة البيانات
-const dbPath = path.join(process.cwd(), 'contest-db.json');
-
-// قراءة قاعدة البيانات
-const readDb = () => {
-  if (!fs.existsSync(dbPath)) {
-    return { participants: [], referrals: [] };
-  }
-  const data = fs.readFileSync(dbPath, 'utf-8');
-  return JSON.parse(data);
-};
+// رابط الاتصال بقاعدة البيانات MongoDB
+const uri = "mongodb+srv://minaadelc4:cHjkStQnKuh91sNt@storefathone.a42qbk5.mongodb.net/storefathon?retryWrites=true&w=majority&appName=storefathone";
+const client = new MongoClient(uri);
 
 export async function GET(request) {
   try {
@@ -21,28 +12,35 @@ export async function GET(request) {
     const limitParam = url.searchParams.get('limit');
     const limit = limitParam ? parseInt(limitParam, 10) : 10;
     
-    // قراءة بيانات المشاركين من قاعدة البيانات
-    const db = readDb();
+    // الاتصال بقاعدة البيانات
+    await client.connect();
+    const database = client.db('storefathon');
+    const participantsCollection = database.collection('participants');
+    
+    // جلب المتصدرين مرتبين حسب عدد الإحالات
+    const leaderboardCursor = participantsCollection
+      .find({})
+      .sort({ referrals: -1 })
+      .limit(limit);
+    
+    const participants = await leaderboardCursor.toArray();
     
     // إذا لم تكن هناك بيانات، نرجع قائمة فارغة
-    if (!db.participants || db.participants.length === 0) {
+    if (!participants || participants.length === 0) {
       return NextResponse.json({ 
         success: true, 
         leaderboard: []
       });
     }
     
-    // ترتيب المشاركين حسب عدد الإحالات بترتيب تنازلي
-    const leaderboard = [...db.participants]
-      .sort((a, b) => b.referrals - a.referrals)
-      .slice(0, limit) // أعلى 10 متصدرين أو حسب العدد المطلوب
-      .map(participant => ({
-        id: participant.id,
-        username: participant.username,
-        castleIP: participant.castleIP,
-        avatar: participant.avatar,
-        referralCount: participant.referrals
-      }));
+    // تنسيق البيانات للواجهة
+    const leaderboard = participants.map(participant => ({
+      id: participant._id.toString(),
+      username: participant.username,
+      castleIP: participant.castleIP,
+      avatar: participant.avatar,
+      referralCount: participant.referrals
+    }));
 
     return NextResponse.json({ 
       success: true, 
@@ -54,5 +52,8 @@ export async function GET(request) {
       success: false, 
       message: 'حدث خطأ أثناء جلب قائمة المتصدرين: ' + (error.message || 'خطأ غير معروف')
     }, { status: 500 });
+  } finally {
+    // إغلاق الاتصال بقاعدة البيانات
+    await client.close();
   }
 } 

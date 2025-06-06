@@ -1,28 +1,9 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { MongoClient, ObjectId } from 'mongodb';
 
-// مسار ملف قاعدة البيانات
-const dbPath = path.join(process.cwd(), 'contest-db.json');
-
-// التأكد من وجود ملف قاعدة البيانات
-const ensureDbExists = () => {
-  if (!fs.existsSync(dbPath)) {
-    fs.writeFileSync(dbPath, JSON.stringify({ participants: [], referrals: [] }), 'utf-8');
-  }
-};
-
-// قراءة قاعدة البيانات
-const readDb = () => {
-  ensureDbExists();
-  const data = fs.readFileSync(dbPath, 'utf-8');
-  return JSON.parse(data);
-};
-
-// كتابة قاعدة البيانات
-const writeDb = (data) => {
-  fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), 'utf-8');
-};
+// رابط الاتصال بقاعدة البيانات MongoDB
+const uri = "mongodb+srv://minaadelc4:cHjkStQnKuh91sNt@storefathone.a42qbk5.mongodb.net/storefathon?retryWrites=true&w=majority&appName=storefathone";
+const client = new MongoClient(uri);
 
 export async function POST(req) {
   try {
@@ -36,11 +17,14 @@ export async function POST(req) {
       }, { status: 400 });
     }
 
-    // قراءة قاعدة البيانات
-    const db = readDb();
+    // الاتصال بقاعدة البيانات
+    await client.connect();
+    const database = client.db('storefathon');
+    const participantsCollection = database.collection('participants');
+    const referralsCollection = database.collection('referrals');
 
     // البحث عن المستخدم الذي قام بالإحالة
-    const referrer = db.participants.find(p => p.castleIP === referrerCastleIP);
+    const referrer = await participantsCollection.findOne({ castleIP: referrerCastleIP });
     if (!referrer) {
       return NextResponse.json({ 
         success: false, 
@@ -49,13 +33,13 @@ export async function POST(req) {
     }
 
     // الحصول على عنوان IP للمستخدم الزائر
-    // في بيئة الإنتاج، يجب استخدام طرق أكثر دقة للتعرف على المستخدم
     const visitorIP = req.headers.get('x-forwarded-for') || 'unknown-ip';
     
     // التحقق من عدم وجود إحالة مسبقة من نفس العنوان
-    const existingReferral = db.referrals.find(ref => 
-      ref.referrerId === referrer.id && ref.visitorIP === visitorIP
-    );
+    const existingReferral = await referralsCollection.findOne({
+      referrerId: referrer._id.toString(),
+      visitorIP: visitorIP
+    });
 
     if (existingReferral) {
       return NextResponse.json({ 
@@ -66,25 +50,27 @@ export async function POST(req) {
 
     // إنشاء إحالة جديدة
     const newReferral = {
-      id: Date.now().toString(),
-      referrerId: referrer.id,
+      referrerId: referrer._id.toString(),
       visitorIP: visitorIP,
-      createdAt: new Date().toISOString()
+      createdAt: new Date()
     };
 
     // إضافة الإحالة الجديدة لقاعدة البيانات
-    db.referrals.push(newReferral);
+    await referralsCollection.insertOne(newReferral);
     
     // زيادة عدد الإحالات للمستخدم المحيل
-    referrer.referrals += 1;
+    await participantsCollection.updateOne(
+      { _id: referrer._id },
+      { $inc: { referrals: 1 } }
+    );
     
-    // حفظ التغييرات
-    writeDb(db);
+    // الحصول على عدد الإحالات المحدث
+    const updatedReferrer = await participantsCollection.findOne({ _id: referrer._id });
 
     return NextResponse.json({ 
       success: true, 
       message: 'تم تسجيل الإحالة بنجاح',
-      referralCount: referrer.referrals
+      referralCount: updatedReferrer.referrals
     });
   } catch (error) {
     console.error('خطأ في تسجيل الإحالة:', error);
@@ -92,5 +78,8 @@ export async function POST(req) {
       success: false, 
       message: 'حدث خطأ أثناء تسجيل الإحالة: ' + (error.message || 'خطأ غير معروف')
     }, { status: 500 });
+  } finally {
+    // إغلاق الاتصال بقاعدة البيانات
+    await client.close();
   }
 } 

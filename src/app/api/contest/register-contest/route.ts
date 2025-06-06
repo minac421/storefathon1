@@ -1,28 +1,9 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { MongoClient } from 'mongodb';
 
-// مسار ملف قاعدة البيانات
-const dbPath = path.join(process.cwd(), 'contest-db.json');
-
-// التأكد من وجود ملف قاعدة البيانات
-const ensureDbExists = () => {
-  if (!fs.existsSync(dbPath)) {
-    fs.writeFileSync(dbPath, JSON.stringify({ participants: [], referrals: [] }), 'utf-8');
-  }
-};
-
-// قراءة قاعدة البيانات
-const readDb = () => {
-  ensureDbExists();
-  const data = fs.readFileSync(dbPath, 'utf-8');
-  return JSON.parse(data);
-};
-
-// كتابة قاعدة البيانات
-const writeDb = (data) => {
-  fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), 'utf-8');
-};
+// رابط الاتصال بقاعدة البيانات MongoDB
+const uri = "mongodb+srv://minaadelc4:cHjkStQnKuh91sNt@storefathone.a42qbk5.mongodb.net/storefathon?retryWrites=true&w=majority&appName=storefathone";
+const client = new MongoClient(uri);
 
 export async function POST(req) {
   try {
@@ -37,11 +18,13 @@ export async function POST(req) {
       }, { status: 400 });
     }
 
-    // قراءة قاعدة البيانات
-    const db = readDb();
+    // الاتصال بقاعدة البيانات
+    await client.connect();
+    const database = client.db('storefathon');
+    const participantsCollection = database.collection('participants');
 
     // التحقق من وجود المستخدم مسبقاً
-    const existingUser = db.participants.find(p => p.castleIP === castleIP);
+    const existingUser = await participantsCollection.findOne({ castleIP });
     if (existingUser) {
       return NextResponse.json({ 
         success: false, 
@@ -51,19 +34,15 @@ export async function POST(req) {
 
     // إضافة المستخدم للمسابقة
     const newParticipant = {
-      id: Date.now().toString(),
       castleIP,
       username,
       avatar: avatar || 1,
-      joinedAt: new Date().toISOString(),
+      joinedAt: new Date(),
       referrals: 0
     };
 
-    // إضافة المستخدم للمصفوفة
-    db.participants.push(newParticipant);
-    
-    // حفظ التغييرات في قاعدة البيانات
-    writeDb(db);
+    // إضافة المستخدم لقاعدة البيانات
+    const result = await participantsCollection.insertOne(newParticipant);
 
     // إنشاء رابط الإحالة باستخدام آي بي القلعة والدومين الصحيح
     const referralLink = `https://storefathon1-c3kg.vercel.app/register?ref=${castleIP}`;
@@ -71,7 +50,10 @@ export async function POST(req) {
     return NextResponse.json({ 
       success: true, 
       message: 'تم تسجيلك بنجاح في المسابقة',
-      participant: newParticipant,
+      participant: {
+        id: result.insertedId.toString(),
+        ...newParticipant
+      },
       referralLink: referralLink
     });
   } catch (error) {
@@ -80,5 +62,8 @@ export async function POST(req) {
       success: false, 
       message: 'حدث خطأ أثناء التسجيل: ' + (error.message || 'خطأ غير معروف')
     }, { status: 500 });
+  } finally {
+    // إغلاق الاتصال بقاعدة البيانات
+    await client.close();
   }
 } 
