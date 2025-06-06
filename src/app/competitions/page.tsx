@@ -51,9 +51,9 @@ export default function ReferralContest() {
   useEffect(() => {
     if (!isClient) return;
 
-    // تاريخ انتهاء المسابقة (10 أيام من الآن)
-    const endDate = new Date();
-    endDate.setDate(endDate.getDate() + 10);
+    // استخدام تاريخ ثابت لانتهاء المسابقة (يمكن تعديله حسب الحاجة)
+    // التاريخ الحالي 15 يوليو 2024
+    const endDate = new Date('2024-07-15T23:59:59');
 
     const updateTimer = () => {
       const now = new Date();
