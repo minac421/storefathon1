@@ -4,13 +4,12 @@ import React from 'react';
 import Link from 'next/link';
 import getTranslation from '@/lib/i18n';
 
-
-
 interface FooterProps {
   locale: string;
+  simplified?: boolean;
 }
 
-export default function Footer({ locale }: FooterProps) {
+export default function Footer({ locale, simplified = false }: FooterProps) {
   const t = getTranslation(locale);
   const isRTL = locale === 'ar';
   const currentYear = new Date().getFullYear();
@@ -139,6 +138,24 @@ export default function Footer({ locale }: FooterProps) {
         return null;
     }
   };
+  
+  // إذا كان مطلوب Footer مبسط (لصفحة المسابقات)
+  if (simplified) {
+    return (
+      <footer className={`bg-gray-900 text-white ${isRTL ? 'rtl' : 'ltr'}`}>
+        {/* Bottom Footer - Simplified */}
+        <div className="py-4">
+          <div className="container mx-auto px-6">
+            <div className="flex flex-col md:flex-row justify-center items-center">
+              <div className="text-gray-400 text-sm">
+                &copy; {currentYear} {t?.footer?.copyright || 'العصر الذهبي - جميع الحقوق محفوظة'}
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
+    );
+  }
   
   return (
     <footer className={`bg-gray-900 text-white ${isRTL ? 'rtl' : 'ltr'}`}>
