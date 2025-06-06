@@ -3,7 +3,7 @@
 import { useEffect, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams as useNextSearchParams } from "next/navigation";
 import getTranslation from '@/lib/i18n';
 import ChatSection from '@/components/chat/ChatSection';
 import ClientButtonsLayout from '@/components/ClientButtonsLayout';
@@ -78,8 +78,6 @@ const testimonials = [
 ];
 
 // مكون منفصل يستخدم useSearchParams
-"use client";
-import { useSearchParams as useNextSearchParams } from "next/navigation";
 
 function ReferralHandler() {
   const searchParams = useNextSearchParams();
