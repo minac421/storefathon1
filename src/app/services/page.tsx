@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import ServiceCartButton from '@/components/cart/ServiceCartButton';
 import ServiceCartDropdown from '@/components/cart/ServiceCartDropdown';
 import ProductDetailsModal from '@/components/modals/ProductDetailsModal';
+import PlaceholderImage from '@/components/common/PlaceholderImage';
 
 // نوع لعناصر السلة
 type CartItem = {
@@ -490,6 +491,9 @@ export default function ServicesPage() {
       return '📦';
     };
     
+    // إضافة حالة لتتبع فشل تحميل الصورة
+    const [imageError, setImageError] = useState(false);
+    
     // فتح تفاصيل المنتج
     const handleShowDetails = () => {
       // تأكد من أن المنتج يحتوي على كل البيانات المطلوبة
@@ -542,11 +546,23 @@ export default function ServicesPage() {
           {/* أيقونة المنتج بتصميم محسن */}
           <div className="flex items-center justify-center mb-5">
             <div className={`w-24 h-24 ${getIconBgColor()} rounded-full flex items-center justify-center text-4xl shadow-md border border-white relative overflow-hidden group`}>
-              <div className="relative z-10 transform transition-transform duration-300 group-hover:scale-110">
-                <span role="img" aria-label={item.iconAlt || 'منتج'} className="text-5xl">
-                  {getIcon()}
-                </span>
-              </div>
+              {item.image && !imageError ? (
+                <img 
+                  src={item.image} 
+                  alt={item.name[locale]} 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    console.error('خطأ في تحميل صورة المنتج:', item.image);
+                    setImageError(true);
+                  }}
+                />
+              ) : (
+                <div className="relative z-10 transform transition-transform duration-300 group-hover:scale-110">
+                  <span role="img" aria-label={item.iconAlt || 'منتج'} className="text-5xl">
+                    {getIcon()}
+                  </span>
+                </div>
+              )}
               <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
             </div>
           </div>

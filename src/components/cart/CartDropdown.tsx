@@ -1,16 +1,14 @@
 "use client";
 
 import React from 'react';
-import { useTranslation } from '@/app/i18n/client';
+import { CartItem } from './CartContext';
+import { Translations } from '../../lib/i18n';
+import translations from '../../lib/i18n';
 
-type CartItem = {
-  id: string;
-  name: string;
-  price: number;
-  icon: string;
-  category: string;
-  quantity: number;
-};
+// Get translations based on locale
+const t = translations['ar']; // We'll use Arabic as default locale for now
+
+// No need to redefine CartItem type since we're importing it from CartContext
 
 type CartDropdownProps = {
   isOpen: boolean;
@@ -18,8 +16,6 @@ type CartDropdownProps = {
   removeFromCart: (id: string, category: string) => void;
   toggleCart: () => void;
   goToCheckout: () => void;
-  locale: string;
-  translations: any;
 };
 
 const CartDropdown: React.FC<CartDropdownProps> = ({ 
@@ -27,23 +23,21 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
   cartItems, 
   removeFromCart, 
   toggleCart, 
-  goToCheckout,
-  locale,
-  translations
+  goToCheckout
 }) => {
   if (!isOpen) return null;
 
   return (
     <div className="fixed top-32 right-4 z-50 bg-white rounded-lg shadow-xl p-4 w-72 max-h-96 overflow-y-auto">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-bold">{translations.cart[locale]}</h3>
+        <h3 className="text-lg font-bold">{t('cart.title')}</h3>
         <button onClick={toggleCart} className="text-gray-500 hover:text-gray-700">
           ✕
         </button>
       </div>
       
       {cartItems.length === 0 ? (
-        <p className="text-gray-500 text-center py-4">{translations.emptyCart[locale]}</p>
+        <p className="text-gray-500 text-center py-4">{t('cart.empty')}</p>
       ) : (
         <>
           <ul className="divide-y divide-gray-200">
@@ -55,9 +49,21 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                   </div>
                   <div>
                     <p className="font-medium">{item.name}</p>
-                    <p className="text-sm text-gray-500">
-                      {item.price} {translations.currency[locale]} × {item.quantity}
-                    </p>
+                    <div className="flex flex-col">
+                      <p className="text-sm text-gray-500">
+                        {item.price} {t('cart.currency')} × {item.quantity}
+                      </p>
+                      {item.discount && (
+                        <div className="flex items-center">
+                          <span className="text-green-600 mr-1">{t('cart.discount')}</span>
+                          {item.discount.type === 'fixed' ? (
+                            <span className="text-green-600">{item.discount.amount} {t('cart.currency')}</span>
+                          ) : (
+                            <span className="text-green-600">{item.discount.amount}%</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <button
@@ -72,10 +78,18 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
           
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="flex justify-between font-bold mb-4">
-              <span>{translations.total[locale]}:</span>
+              <span>{t('cart.total')}:</span>
               <span>
-                {cartItems.reduce((total, item) => total + (item.price * item.quantity), 0)}
-                {' '}{translations.currency[locale]}
+                {cartItems.reduce((total, item) => {
+                  const discountedPrice = item.discount ? 
+                    (item.discount.type === 'fixed' 
+                      ? Math.max(0, item.price - item.discount.amount)
+                      : item.price * (1 - item.discount.amount / 100)
+                    ) : 
+                    item.price;
+                  return total + (discountedPrice * item.quantity);
+                }, 0)}
+                {' '}{t('cart.currency')}
               </span>
             </div>
             
@@ -83,7 +97,7 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
               onClick={goToCheckout}
               className="block w-full bg-amber-600 hover:bg-amber-700 text-white text-center py-2 rounded-lg"
             >
-              {translations.checkout[locale]}
+              {t('cart.checkout')}
             </button>
           </div>
         </>

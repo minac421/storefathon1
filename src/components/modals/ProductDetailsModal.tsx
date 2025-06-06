@@ -1,4 +1,5 @@
 import React from 'react';
+import PlaceholderImage from '../common/PlaceholderImage';
 
 // تعريف نوع الخصائص للمكون
 interface ProductDetailsModalProps {
@@ -58,8 +59,19 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
   const productImage = product && product.image ? [product.image] : [];
   const productImages = product && product.images && Array.isArray(product.images) ? product.images : [];
   
-  // دمج مصادر الصور في مصفوفة واحدة
-  const allImages = [...productImage, ...productImages].filter(img => img && typeof img === 'string' && img.trim() !== '');
+  // دمج مصادر الصور في مصفوفة واحدة والتأكد من أن المسارات صحيحة
+  const allImages = [...productImage, ...productImages]
+    .filter(img => img && typeof img === 'string' && img.trim() !== '')
+    .map(img => {
+      // التحقق من وجود بروتوكول (http أو https) في المسار
+      if (img.startsWith('http') || img.startsWith('//')) {
+        return img; // إذا كان مسار كامل (مثل روابط Cloudinary)، لا نغيره
+      } else if (img.startsWith('/')) {
+        return img; // إذا كان مسار يبدأ بـ "/"، لا نغيره
+      } else {
+        return `/${img}`; // إضافة "/" إذا كان مسار نسبي
+      }
+    });
   
   // التوقف عن المعالجة إذا كانت النافذة مغلقة
   if (!isOpen || !product) return null;
@@ -192,7 +204,12 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                 </>
               ) : (
                 <>
-                  <ProductIcon />
+                  <PlaceholderImage 
+                    width={300} 
+                    height={300} 
+                    text={productName} 
+                    className="rounded-lg"
+                  />
                   <div className="absolute bottom-2 left-0 right-0 text-center">
                     <span className="bg-white/80 px-3 py-1 text-sm rounded-full shadow-sm">
                       {productName}

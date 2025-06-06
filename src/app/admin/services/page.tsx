@@ -404,6 +404,7 @@ export default function ServicesManagement() {
       
       console.log('تجهيز بيانات المنتج للإرسال مع الصورة:', imageUrl);
       
+      // تحديث بنية البيانات للتأكد من أن imageUrl يتم تخزينه بشكل صحيح
       const serviceData = {
         id: finalProductId,
         category: productForm.category,
@@ -416,7 +417,8 @@ export default function ServicesManagement() {
         icon: productForm.icon || '💳',
         iconAlt: productForm.name,
         popular: productForm.popular,
-        image: imageUrl, // مسار الصورة بعد الرفع
+        // استخدام رابط الصورة كما هو (رابط Cloudinary كامل)
+        image: imageUrl,
         description: productForm.description ? {
           ar: productForm.description,
           en: productForm.description,

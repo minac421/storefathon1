@@ -308,6 +308,19 @@ export default function OrdersManagement() {
                         src={selectedOrder.images.coordImageUrl} 
                         alt="صورة الإحداثيات" 
                         className="object-contain w-full h-auto rounded border bg-gray-50 p-1"
+                        onError={(e) => {
+                          // في حالة حدوث خطأ في تحميل الصورة، عرض صورة بديلة
+                          console.error('خطأ في تحميل صورة الإحداثيات:', selectedOrder.images?.coordImageUrl);
+                          e.currentTarget.src = '/images/image-error.svg';
+                          // إعادة المحاولة باستخدام المسار المطلق
+                          setTimeout(() => {
+                            if (e.currentTarget.src.includes('/images/image-error.svg')) {
+                              const absolutePath = window.location.origin + selectedOrder.images?.coordImageUrl;
+                              console.log('محاولة استخدام المسار المطلق:', absolutePath);
+                              e.currentTarget.src = absolutePath;
+                            }
+                          }, 1000);
+                        }}
                       />
                     </div>
                     <a 
@@ -315,6 +328,7 @@ export default function OrdersManagement() {
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="text-amber-600 hover:text-amber-800 text-sm inline-flex items-center"
+                      download={`coords-${selectedOrder.id}.jpg`}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -331,7 +345,20 @@ export default function OrdersManagement() {
                       <img 
                         src={selectedOrder.images.nameImageUrl} 
                         alt="صورة اسم اللاعب" 
-                        className="object-contain w-full h-auto rounded border bg-gray-50 p-1"
+                        className="object-contain w-full h-auto rounded border bg-gray-50 p-1" 
+                        onError={(e) => {
+                          // في حالة حدوث خطأ في تحميل الصورة، عرض صورة بديلة
+                          console.error('خطأ في تحميل صورة اسم اللاعب:', selectedOrder.images?.nameImageUrl);
+                          e.currentTarget.src = '/images/image-error.svg';
+                          // إعادة المحاولة باستخدام المسار المطلق
+                          setTimeout(() => {
+                            if (e.currentTarget.src.includes('/images/image-error.svg')) {
+                              const absolutePath = window.location.origin + selectedOrder.images?.nameImageUrl;
+                              console.log('محاولة استخدام المسار المطلق:', absolutePath);
+                              e.currentTarget.src = absolutePath;
+                            }
+                          }, 1000);
+                        }}
                       />
                     </div>
                     <a 
@@ -339,6 +366,7 @@ export default function OrdersManagement() {
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="text-amber-600 hover:text-amber-800 text-sm inline-flex items-center"
+                      download={`player-${selectedOrder.id}.jpg`}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />

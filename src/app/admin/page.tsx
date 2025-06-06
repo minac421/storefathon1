@@ -16,6 +16,18 @@ export default function AdminDashboard() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordMessage, setPasswordMessage] = useState({ type: '', text: '' });
+  
+  // إضافة حالات لوحة المعلومات
+  const [dashboardStats, setDashboardStats] = useState({
+    orderStats: { total: 0, new: 0, processing: 0, completed: 0 },
+    customerStats: { total: 0 },
+    productStats: { total: 0 },
+    revenueStats: { total: 0, thisWeek: 0, lastWeek: 0, thisMonth: 0 },
+    latestOrders: []
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  
   const router = useRouter();
 
   // بيانات اعتماد المسؤول (في الإنتاج، يجب تخزين هذه البيانات بشكل آمن وعدم تضمينها في الكود)
@@ -31,6 +43,33 @@ export default function AdminDashboard() {
       setIsLoggedIn(true);
     }
   }, []);
+  
+  // جلب إحصائيات لوحة المعلومات
+  useEffect(() => {
+    if (isLoggedIn) {
+      const fetchDashboardStats = async () => {
+        try {
+          setIsLoading(true);
+          const response = await fetch('/api/dashboard/stats');
+          
+          if (!response.ok) {
+            throw new Error(`خطأ في الاتصال: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          setDashboardStats(data);
+          setError('');
+        } catch (err) {
+          console.error('خطأ في جلب إحصائيات لوحة التحكم:', err);
+          setError('حدث خطأ أثناء جلب البيانات. الرجاء المحاولة مرة أخرى.');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      
+      fetchDashboardStats();
+    }
+  }, [isLoggedIn]);
 
   // التحقق من تسجيل الدخول
   const handleLogin = (e: React.FormEvent) => {
@@ -253,6 +292,22 @@ export default function AdminDashboard() {
           </header>
           
           <main className="max-w-7xl mx-auto py-6 px-6">
+            {isLoading ? (
+              <div className="flex justify-center items-center h-64">
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-600"></div>
+              </div>
+            ) : error ? (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                <p>{error}</p>
+                <button 
+                  onClick={() => window.location.reload()} 
+                  className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                >
+                  إعادة المحاولة
+                </button>
+              </div>
+            ) : (
+              <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {/* إحصائيات */}
               <div className="bg-white rounded-lg shadow-sm p-6">
@@ -262,7 +317,7 @@ export default function AdminDashboard() {
                   </div>
                   <div className="mr-4">
                     <p className="text-gray-500">الطلبات الجديدة</p>
-                    <h2 className="text-2xl font-bold text-gray-800">12</h2>
+                        <h2 className="text-2xl font-bold text-gray-800">{dashboardStats.orderStats.new}</h2>
                   </div>
                 </div>
               </div>
@@ -274,7 +329,7 @@ export default function AdminDashboard() {
                   </div>
                   <div className="mr-4">
                     <p className="text-gray-500">الإيرادات</p>
-                    <h2 className="text-2xl font-bold text-gray-800">5,200 $</h2>
+                        <h2 className="text-2xl font-bold text-gray-800">{dashboardStats.revenueStats.total.toFixed(2)} $</h2>
                   </div>
                 </div>
               </div>
@@ -286,7 +341,7 @@ export default function AdminDashboard() {
                   </div>
                   <div className="mr-4">
                     <p className="text-gray-500">العملاء</p>
-                    <h2 className="text-2xl font-bold text-gray-800">45</h2>
+                        <h2 className="text-2xl font-bold text-gray-800">{dashboardStats.customerStats.total}</h2>
                   </div>
                 </div>
               </div>
@@ -298,7 +353,7 @@ export default function AdminDashboard() {
                   </div>
                   <div className="mr-4">
                     <p className="text-gray-500">المنتجات</p>
-                    <h2 className="text-2xl font-bold text-gray-800">18</h2>
+                        <h2 className="text-2xl font-bold text-gray-800">{dashboardStats.productStats.total}</h2>
                   </div>
                 </div>
               </div>
@@ -316,33 +371,45 @@ export default function AdminDashboard() {
                 </div>
                 
                 <div className="divide-y divide-gray-200">
-                  {/* طلبات وهمية */}
-                  {[
-                    { id: '1001', customer: 'أحمد محمد', date: 'اليوم، 10:30', amount: '450', status: 'جديد' },
-                    { id: '1002', customer: 'سارة أحمد', date: 'اليوم، 09:15', amount: '720', status: 'قيد المعالجة' },
-                    { id: '1003', customer: 'محمد علي', date: 'الأمس، 16:20', amount: '1200', status: 'مكتمل' },
-                    { id: '1004', customer: 'فاطمة خالد', date: 'الأمس، 12:30', amount: '350', status: 'مكتمل' },
-                  ].map(order => (
+                      {dashboardStats.latestOrders.length > 0 ? (
+                        dashboardStats.latestOrders.map((order: any) => (
                     <div key={order.id} className="px-6 py-4 flex justify-between items-center">
                       <div>
-                        <p className="font-medium text-gray-800">#{order.id}</p>
+                              <p className="font-medium text-gray-800">#{order.orderNumber}</p>
                         <p className="text-sm text-gray-600">{order.customer}</p>
-                        <p className="text-xs text-gray-500">{order.date}</p>
+                              <p className="text-xs text-gray-500">
+                                {new Date(order.date).toLocaleDateString('ar-SA', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </p>
                       </div>
                       <div className="text-left">
-                        <p className="font-medium">{order.amount} $</p>
+                              <p className="font-medium">{order.amount.toFixed(2)} $</p>
                         <span className={`inline-block px-2 py-1 rounded-full text-xs ${
-                          order.status === 'جديد' 
+                                order.status === 'pending' 
                             ? 'bg-amber-100 text-amber-800' 
-                            : order.status === 'قيد المعالجة'
+                                  : order.status === 'processing'
                             ? 'bg-blue-100 text-blue-800'
                             : 'bg-green-100 text-green-800'
                         }`}>
-                          {order.status}
+                                {order.status === 'pending' 
+                                  ? 'جديد' 
+                                  : order.status === 'processing'
+                                  ? 'قيد المعالجة'
+                                  : 'مكتمل'}
                         </span>
                       </div>
                     </div>
-                  ))}
+                        ))
+                      ) : (
+                        <div className="px-6 py-8 text-center text-gray-500">
+                          لا توجد طلبات حتى الآن
+                        </div>
+                      )}
                 </div>
               </div>
               
@@ -361,20 +428,22 @@ export default function AdminDashboard() {
                   <div className="mt-4 grid grid-cols-3 gap-4">
                     <div className="text-center">
                       <p className="text-gray-500 text-sm">هذا الأسبوع</p>
-                      <p className="font-bold text-gray-800">1,750 $</p>
+                          <p className="font-bold text-gray-800">{dashboardStats.revenueStats.thisWeek.toFixed(2)} $</p>
                     </div>
                     <div className="text-center">
                       <p className="text-gray-500 text-sm">الأسبوع الماضي</p>
-                      <p className="font-bold text-gray-800">1,420 $</p>
+                          <p className="font-bold text-gray-800">{dashboardStats.revenueStats.lastWeek.toFixed(2)} $</p>
                     </div>
                     <div className="text-center">
                       <p className="text-gray-500 text-sm">هذا الشهر</p>
-                      <p className="font-bold text-gray-800">5,200 $</p>
+                          <p className="font-bold text-gray-800">{dashboardStats.revenueStats.thisMonth.toFixed(2)} $</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
+              </>
+            )}
           </main>
         </div>
         

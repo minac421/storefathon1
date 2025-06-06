@@ -36,11 +36,11 @@ export async function GET(request) {
     // تنسيق البيانات للواجهة
     const leaderboard = participants.map(participant => ({
       id: participant._id.toString(),
-      username: participant.username,
-      castleIP: participant.castleIP,
-      avatar: participant.avatar,
-      referralCount: participant.referrals
-    }));
+        username: participant.username,
+        castleIP: participant.castleIP,
+        avatar: participant.avatar,
+        referralCount: participant.referrals
+      }));
 
     return NextResponse.json({ 
       success: true, 

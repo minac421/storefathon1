@@ -29,7 +29,12 @@ export default function CastlesPage({ params }: { params: { locale: string } }) 
   
   // حالة تصفية القلاع
   const [levelFilter, setLevelFilter] = useState<number | null>(null);
+  const [priceRange, setPriceRange] = useState<{min: number | null, max: number | null}>({min: null, max: null});
+  const [strengthRange, setStrengthRange] = useState<{min: number | null, max: number | null}>({min: null, max: null});
+  const [featureFilter, setFeatureFilter] = useState<string | null>(null);
+  const [showPopularOnly, setShowPopularOnly] = useState<boolean>(false);
   const [sortBy, setSortBy] = useState<string>('level');
+  const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
   const [castles, setCastles] = useState<Castle[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -286,6 +291,13 @@ export default function CastlesPage({ params }: { params: { locale: string } }) 
   // تصفية وترتيب القلاع
   const filteredCastles = castles
     .filter(castle => levelFilter === null || castle.level === levelFilter)
+    .filter(castle => !priceRange.min || castle.price >= priceRange.min)
+    .filter(castle => !priceRange.max || castle.price <= priceRange.max)
+    .filter(castle => !strengthRange.min || castle.strength >= strengthRange.min)
+    .filter(castle => !strengthRange.max || castle.strength <= strengthRange.max)
+    .filter(castle => !featureFilter || castle.features.some(feature => 
+      feature.toLowerCase().includes(featureFilter.toLowerCase())))
+    .filter(castle => !showPopularOnly || castle.popular)
     .sort((a, b) => {
       switch(sortBy) {
         case 'level': return a.level - b.level;
@@ -318,40 +330,232 @@ export default function CastlesPage({ params }: { params: { locale: string } }) 
       {/* Filters */}
       <section className="py-8 bg-gray-50">
         <div className="container mx-auto px-6">
-          <div className="flex flex-wrap justify-between gap-4">
-            <div>
-              <label className="text-gray-700 mr-2 font-medium">{getLocalizedText('filter')}:</label>
-              <select 
-                className="px-3 py-2 border border-gray-300 rounded-md"
-                value={levelFilter === null ? 'all' : levelFilter}
-                onChange={(e) => setLevelFilter(e.target.value === 'all' ? null : Number(e.target.value))}
-              >
-                <option value="all">{getLocalizedText('allLevels')}</option>
-                <option value="5">{getLocalizedText('level')} 5</option>
-                <option value="10">{getLocalizedText('level')} 10</option>
-                <option value="15">{getLocalizedText('level')} 15</option>
-                <option value="20">{getLocalizedText('level')} 20</option>
-                <option value="25">{getLocalizedText('level')} 25</option>
-                <option value="30">{getLocalizedText('level')} 30</option>
-                <option value="35">{getLocalizedText('level')} 35</option>
-              </select>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold">{locale === 'ar' ? 'تصفية القلاع' : locale === 'tr' ? 'Kaleleri Filtrele' : 'Filter Castles'}</h2>
+            <button 
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+              className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors flex items-center"
+            >
+              {isFilterOpen ? 
+                (locale === 'ar' ? 'إخفاء الفلاتر' : locale === 'tr' ? 'Filtreleri Gizle' : 'Hide Filters') : 
+                (locale === 'ar' ? 'عرض الفلاتر' : locale === 'tr' ? 'Filtreleri Göster' : 'Show Filters')}
+              <span className="ml-2">{isFilterOpen ? '▲' : '▼'}</span>
+            </button>
+          </div>
+          
+          <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isFilterOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6 p-4 bg-white rounded-lg shadow-sm">
+              {/* Level Filter */}
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">{getLocalizedText('level')}:</label>
+                <select 
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  value={levelFilter === null ? 'all' : levelFilter}
+                  onChange={(e) => setLevelFilter(e.target.value === 'all' ? null : Number(e.target.value))}
+                >
+                  <option value="all">{getLocalizedText('allLevels')}</option>
+                  <option value="5">{getLocalizedText('level')} 5</option>
+                  <option value="10">{getLocalizedText('level')} 10</option>
+                  <option value="15">{getLocalizedText('level')} 15</option>
+                  <option value="20">{getLocalizedText('level')} 20</option>
+                  <option value="25">{getLocalizedText('level')} 25</option>
+                  <option value="30">{getLocalizedText('level')} 30</option>
+                  <option value="35">{getLocalizedText('level')} 35</option>
+                </select>
+              </div>
+              
+              {/* Price Range Filter */}
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">{locale === 'ar' ? 'نطاق السعر' : locale === 'tr' ? 'Fiyat Aralığı' : 'Price Range'}:</label>
+                <div className="flex space-x-2">
+                  <input 
+                    type="number" 
+                    placeholder={locale === 'ar' ? 'الحد الأدنى' : locale === 'tr' ? 'Min' : 'Min'} 
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    value={priceRange.min !== null ? priceRange.min : ''}
+                    onChange={(e) => setPriceRange({...priceRange, min: e.target.value ? Number(e.target.value) : null})}
+                  />
+                  <span className="flex items-center">-</span>
+                  <input 
+                    type="number" 
+                    placeholder={locale === 'ar' ? 'الحد الأقصى' : locale === 'tr' ? 'Maks' : 'Max'} 
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    value={priceRange.max !== null ? priceRange.max : ''}
+                    onChange={(e) => setPriceRange({...priceRange, max: e.target.value ? Number(e.target.value) : null})}
+                  />
+                </div>
+              </div>
+              
+              {/* Strength Range Filter */}
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">{locale === 'ar' ? 'نطاق القوة' : locale === 'tr' ? 'Güç Aralığı' : 'Strength Range'}:</label>
+                <div className="flex space-x-2">
+                  <input 
+                    type="number" 
+                    placeholder={locale === 'ar' ? 'الحد الأدنى' : locale === 'tr' ? 'Min' : 'Min'} 
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    value={strengthRange.min !== null ? strengthRange.min : ''}
+                    onChange={(e) => setStrengthRange({...strengthRange, min: e.target.value ? Number(e.target.value) : null})}
+                  />
+                  <span className="flex items-center">-</span>
+                  <input 
+                    type="number" 
+                    placeholder={locale === 'ar' ? 'الحد الأقصى' : locale === 'tr' ? 'Maks' : 'Max'} 
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    value={strengthRange.max !== null ? strengthRange.max : ''}
+                    onChange={(e) => setStrengthRange({...strengthRange, max: e.target.value ? Number(e.target.value) : null})}
+                  />
+                </div>
+              </div>
+              
+              {/* Feature Filter */}
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">{locale === 'ar' ? 'البحث عن ميزة' : locale === 'tr' ? 'Özellik Ara' : 'Search Feature'}:</label>
+                <input 
+                  type="text" 
+                  placeholder={locale === 'ar' ? 'أدخل كلمة للبحث في الميزات' : locale === 'tr' ? 'Özelliklerde aramak için kelime girin' : 'Enter keyword to search in features'} 
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  value={featureFilter !== null ? featureFilter : ''}
+                  onChange={(e) => setFeatureFilter(e.target.value || null)}
+                />
+              </div>
+              
+              {/* Popular Only Filter */}
+              <div className="flex items-center">
+                <input 
+                  type="checkbox" 
+                  id="popularOnly" 
+                  className="w-5 h-5 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
+                  checked={showPopularOnly}
+                  onChange={(e) => setShowPopularOnly(e.target.checked)}
+                />
+                <label htmlFor="popularOnly" className="ml-2 text-gray-700">
+                  {locale === 'ar' ? 'القلاع الشائعة فقط' : locale === 'tr' ? 'Sadece Popüler Kaleler' : 'Popular Castles Only'}
+                </label>
+              </div>
+              
+              {/* Sort By */}
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">{getLocalizedText('sortBy')}:</label>
+                <select 
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                >
+                  <option value="level">{getLocalizedText('levelAsc')}</option>
+                  <option value="level-desc">{getLocalizedText('levelDesc')}</option>
+                  <option value="price">{getLocalizedText('priceAsc')}</option>
+                  <option value="price-desc">{getLocalizedText('priceDesc')}</option>
+                  <option value="strength">{getLocalizedText('strengthAsc')}</option>
+                  <option value="strength-desc">{getLocalizedText('strengthDesc')}</option>
+                </select>
+              </div>
             </div>
             
-            <div>
-              <label className="text-gray-700 mr-2 font-medium">{getLocalizedText('sortBy')}:</label>
-              <select 
-                className="px-3 py-2 border border-gray-300 rounded-md"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
+            <div className="flex justify-end mb-4">
+              <button 
+                onClick={() => {
+                  setLevelFilter(null);
+                  setPriceRange({min: null, max: null});
+                  setStrengthRange({min: null, max: null});
+                  setFeatureFilter(null);
+                  setShowPopularOnly(false);
+                  setSortBy('level');
+                }}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition-colors mr-2"
               >
-                <option value="level">{getLocalizedText('levelAsc')}</option>
-                <option value="level-desc">{getLocalizedText('levelDesc')}</option>
-                <option value="price">{getLocalizedText('priceAsc')}</option>
-                <option value="price-desc">{getLocalizedText('priceDesc')}</option>
-                <option value="strength">{getLocalizedText('strengthAsc')}</option>
-                <option value="strength-desc">{getLocalizedText('strengthDesc')}</option>
-              </select>
+                {locale === 'ar' ? 'إعادة ضبط الفلاتر' : locale === 'tr' ? 'Filtreleri Sıfırla' : 'Reset Filters'}
+              </button>
+              <button 
+                onClick={() => setIsFilterOpen(false)}
+                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors"
+              >
+                {locale === 'ar' ? 'تطبيق' : locale === 'tr' ? 'Uygula' : 'Apply'}
+              </button>
             </div>
+          </div>
+          
+          {/* Filter Indicators */}
+          <div className="flex flex-wrap gap-2 mt-2">
+            {levelFilter !== null && (
+              <div className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm flex items-center">
+                {getLocalizedText('level')}: {levelFilter}
+                <button 
+                  className="ml-2 text-amber-800 hover:text-amber-900" 
+                  onClick={() => setLevelFilter(null)}
+                >×</button>
+              </div>
+            )}
+            {priceRange.min !== null && (
+              <div className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm flex items-center">
+                {locale === 'ar' ? 'السعر من' : locale === 'tr' ? 'Fiyat min' : 'Price from'}: ${priceRange.min}
+                <button 
+                  className="ml-2 text-amber-800 hover:text-amber-900" 
+                  onClick={() => setPriceRange({...priceRange, min: null})}
+                >×</button>
+              </div>
+            )}
+            {priceRange.max !== null && (
+              <div className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm flex items-center">
+                {locale === 'ar' ? 'السعر حتى' : locale === 'tr' ? 'Fiyat max' : 'Price to'}: ${priceRange.max}
+                <button 
+                  className="ml-2 text-amber-800 hover:text-amber-900" 
+                  onClick={() => setPriceRange({...priceRange, max: null})}
+                >×</button>
+              </div>
+            )}
+            {strengthRange.min !== null && (
+              <div className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm flex items-center">
+                {locale === 'ar' ? 'القوة من' : locale === 'tr' ? 'Güç min' : 'Strength from'}: {strengthRange.min}
+                <button 
+                  className="ml-2 text-amber-800 hover:text-amber-900" 
+                  onClick={() => setStrengthRange({...strengthRange, min: null})}
+                >×</button>
+              </div>
+            )}
+            {strengthRange.max !== null && (
+              <div className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm flex items-center">
+                {locale === 'ar' ? 'القوة حتى' : locale === 'tr' ? 'Güç max' : 'Strength to'}: {strengthRange.max}
+                <button 
+                  className="ml-2 text-amber-800 hover:text-amber-900" 
+                  onClick={() => setStrengthRange({...strengthRange, max: null})}
+                >×</button>
+              </div>
+            )}
+            {featureFilter !== null && (
+              <div className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm flex items-center">
+                {locale === 'ar' ? 'ميزة' : locale === 'tr' ? 'Özellik' : 'Feature'}: {featureFilter}
+                <button 
+                  className="ml-2 text-amber-800 hover:text-amber-900" 
+                  onClick={() => setFeatureFilter(null)}
+                >×</button>
+              </div>
+            )}
+            {showPopularOnly && (
+              <div className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm flex items-center">
+                {locale === 'ar' ? 'القلاع الشائعة فقط' : locale === 'tr' ? 'Sadece Popüler Kaleler' : 'Popular Only'}
+                <button 
+                  className="ml-2 text-amber-800 hover:text-amber-900" 
+                  onClick={() => setShowPopularOnly(false)}
+                >×</button>
+              </div>
+            )}
+            {(levelFilter !== null || priceRange.min !== null || priceRange.max !== null || 
+             strengthRange.min !== null || strengthRange.max !== null || 
+             featureFilter !== null || showPopularOnly) && (
+              <button 
+                className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1 rounded-full text-sm"
+                onClick={() => {
+                  setLevelFilter(null);
+                  setPriceRange({min: null, max: null});
+                  setStrengthRange({min: null, max: null});
+                  setFeatureFilter(null);
+                  setShowPopularOnly(false);
+                }}
+              >
+                {locale === 'ar' ? 'مسح الكل' : locale === 'tr' ? 'Tümünü Temizle' : 'Clear All'}
+              </button>
+            )}
           </div>
         </div>
       </section>

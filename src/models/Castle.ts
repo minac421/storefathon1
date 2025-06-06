@@ -26,6 +26,11 @@ const CastleSchema = new mongoose.Schema({
     required: [true, 'الرجاء تحديد سعر القلعة'],
     min: 0
   },
+  castleType: {
+    type: String,
+    required: [true, 'الرجاء تحديد نوع القلعة'],
+    default: 'standard'
+  },
   features: [{
     type: String,
     trim: true
@@ -58,3 +63,4 @@ CastleSchema.index({ name: 'text', description: 'text' });
 
 // إنشاء النموذج (اذا لم يكن موجود بالفعل)
 export default mongoose.models.Castle || mongoose.model('Castle', CastleSchema);
+
