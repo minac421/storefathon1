@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Footer from "@/components/Footer";
 import Image from "next/image";
@@ -26,6 +26,9 @@ export default function ReferralContest() {
     seconds: 0
   });
 
+  // إضافة حالة لتحديد لون المؤقت
+  const [timerStatus, setTimerStatus] = useState('normal'); // normal, warning, danger
+
   // قائمة الصور الرمزية المتاحة للاختيار
   const avatars = [
     { id: 1, src: "/images/avatars/avatar1.png" },
@@ -41,6 +44,12 @@ export default function ReferralContest() {
 
   // إضافة state جديدة للتحكم في العرض
   const [isClient, setIsClient] = useState(false);
+  
+  // إضافة state جديدة لحالة تحديث الإحالات
+  const [isUpdatingReferrals, setIsUpdatingReferrals] = useState(false);
+  
+  // إضافة معلومات عن آخر تحديث
+  const [lastRefreshTime, setLastRefreshTime] = useState(null);
   
   // إضافة useEffect للتأكد من أن الكود يعمل فقط على جانب العميل
   useEffect(() => {
@@ -71,6 +80,19 @@ export default function ReferralContest() {
       const seconds = Math.floor((diff % (1000 * 60)) / 1000);
       
       setTimeRemaining({ days, hours, minutes, seconds });
+      
+      // تحديث حالة المؤقت بناءً على الوقت المتبقي
+      if (days === 0) {
+        if (hours < 6) {
+          setTimerStatus('danger');
+        } else if (hours < 24) {
+          setTimerStatus('warning');
+        }
+      } else if (days === 1) {
+        setTimerStatus('warning');
+      } else {
+        setTimerStatus('normal');
+      }
     };
     
     // تحديث المؤقت كل ثانية
@@ -118,19 +140,38 @@ export default function ReferralContest() {
     }
   }, [isClient]);
 
-  // دالة لجلب عدد الإحالات
-  const fetchReferralCount = async (ip) => {
+  // دالة لجلب عدد الإحالات محسنة باستخدام useCallback
+  const fetchReferralCount = useCallback(async (ip) => {
     try {
+      setIsUpdatingReferrals(true);
       const response = await fetch(`/api/contest/referrals/count?ip=${ip}`);
       const data = await response.json();
       
       if (data.success) {
         setUserReferralCount(data.count);
+        setLastRefreshTime(new Date());
       }
+      setIsUpdatingReferrals(false);
     } catch (error) {
       console.error("خطأ في جلب عدد الإحالات", error);
+      setIsUpdatingReferrals(false);
     }
-  };
+  }, []);
+
+  // إضافة تحديث دوري لعدد الإحالات
+  useEffect(() => {
+    if (!isClient || !isRegistered || !castleIP) return;
+    
+    // تحديث أولي لعدد الإحالات
+    fetchReferralCount(castleIP);
+    
+    // تحديث دوري كل 2 دقيقة
+    const intervalId = setInterval(() => {
+      fetchReferralCount(castleIP);
+    }, 2 * 60 * 1000); // 2 دقيقة
+    
+    return () => clearInterval(intervalId);
+  }, [isClient, isRegistered, castleIP, fetchReferralCount]);
 
   // دالة لتسجيل إحالة
   const registerReferral = async (referrerCode) => {
@@ -253,6 +294,12 @@ export default function ReferralContest() {
       });
   };
 
+  const handleRefreshReferrals = () => {
+    if (isRegistered && castleIP && !isUpdatingReferrals) {
+      fetchReferralCount(castleIP);
+    }
+  };
+
   // تعريف منصات التواصل الاجتماعي
   const socialPlatforms = [
     { 
@@ -297,21 +344,27 @@ export default function ReferralContest() {
     }
   ];
 
+  // تحسين وظيفة shareOnSocialMedia لإضافة رسائل مخصصة لكل منصة
   const shareOnSocialMedia = (platform) => {
     let shareUrl = "";
-    const shareText = "انضم إلى موقع Store Fathon واحصل على خدمات متميزة للاعبين! استخدم رابط الدعوة الخاص بي:";
+    let shareText = "";
     
+    // تخصيص الرسالة حسب المنصة
     switch(platform) {
       case 'facebook':
+        shareText = "انضم إلى مسابقة Store Fathon واحصل على جوائز قيمة! استخدم رابط الدعوة الخاص بي 👇";
         shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(userReferralLink)}&quote=${encodeURIComponent(shareText)}`;
         break;
       case 'twitter':
+        shareText = "انضم إلى مسابقة #StoreFathon واربح جوائز رائعة! استخدم رابط الدعوة الخاص بي 👇";
         shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(userReferralLink)}`;
         break;
       case 'whatsapp':
+        shareText = "مرحباً! أدعوك للانضمام إلى مسابقة Store Fathon للفوز بجوائز قيمة. استخدم رابط الدعوة الخاص بي:";
         shareUrl = `https://wa.me/?text=${encodeURIComponent(shareText + " " + userReferralLink)}`;
         break;
       case 'telegram':
+        shareText = "مرحباً! أدعوك للانضمام إلى مسابقة Store Fathon للفوز بجوائز قيمة 🏆 استخدم رابط الدعوة الخاص بي:";
         shareUrl = `https://t.me/share/url?url=${encodeURIComponent(userReferralLink)}&text=${encodeURIComponent(shareText)}`;
         break;
     }
@@ -328,37 +381,69 @@ export default function ReferralContest() {
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-lg p-5 md:p-8 mb-6 md:mb-10 text-white">
           <h1 className="text-2xl md:text-4xl font-bold mb-4 md:mb-6 text-center">مسابقة الدعوة والإحالة</h1>
           
-          {/* تايمر العد التنازلي */}
+          {/* تايمر العد التنازلي محسن */}
           <div className="flex justify-center mb-4">
             <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3 md:p-4 inline-flex">
               <div className="flex flex-row-reverse gap-2 md:gap-4">
                 <div className="text-center w-16 md:w-20">
-                  <div className="bg-white/20 rounded-lg p-2">
+                  <div className={`${
+                    timerStatus === 'danger' ? 'bg-red-500/30' : 
+                    timerStatus === 'warning' ? 'bg-amber-500/30' : 
+                    'bg-white/20'
+                  } rounded-lg p-2 transition-colors duration-500`}>
                     <div className="text-2xl md:text-4xl font-bold">{timeRemaining.days}</div>
                   </div>
                   <div className="text-xs md:text-sm mt-1">أيام</div>
                 </div>
                 <div className="text-center w-16 md:w-20">
-                  <div className="bg-white/20 rounded-lg p-2">
+                  <div className={`${
+                    timerStatus === 'danger' ? 'bg-red-500/30' : 
+                    timerStatus === 'warning' ? 'bg-amber-500/30' : 
+                    'bg-white/20'
+                  } rounded-lg p-2 transition-colors duration-500`}>
                     <div className="text-2xl md:text-4xl font-bold">{timeRemaining.hours}</div>
                   </div>
                   <div className="text-xs md:text-sm mt-1">ساعات</div>
                 </div>
                 <div className="text-center w-16 md:w-20">
-                  <div className="bg-white/20 rounded-lg p-2">
+                  <div className={`${
+                    timerStatus === 'danger' ? 'bg-red-500/30' : 
+                    timerStatus === 'warning' ? 'bg-amber-500/30' : 
+                    'bg-white/20'
+                  } rounded-lg p-2 transition-colors duration-500`}>
                     <div className="text-2xl md:text-4xl font-bold">{timeRemaining.minutes}</div>
                   </div>
                   <div className="text-xs md:text-sm mt-1">دقائق</div>
                 </div>
                 <div className="text-center w-16 md:w-20">
-                  <div className="bg-white/20 rounded-lg p-2">
+                  <div className={`${
+                    timerStatus === 'danger' ? 'bg-red-500/30' : 
+                    timerStatus === 'warning' ? 'bg-amber-500/30' : 
+                    'bg-white/20'
+                  } rounded-lg p-2 transition-colors duration-500 relative overflow-hidden`}>
                     <div className="text-2xl md:text-4xl font-bold">{timeRemaining.seconds}</div>
+                    <div className={`absolute bottom-0 left-0 h-1 ${
+                      timerStatus === 'danger' ? 'bg-red-400' : 
+                      timerStatus === 'warning' ? 'bg-amber-400' : 
+                      'bg-white/40'
+                    }`} style={{ width: `${(timeRemaining.seconds / 60) * 100}%` }}></div>
                   </div>
                   <div className="text-xs md:text-sm mt-1">ثواني</div>
                 </div>
               </div>
             </div>
           </div>
+          
+          {/* إضافة إشعار للوقت المتبقي عندما يكون قليلاً */}
+          {timerStatus !== 'normal' && (
+            <div className={`${
+              timerStatus === 'danger' ? 'bg-red-500' : 'bg-amber-500'
+            } text-white text-sm md:text-base py-2 px-4 rounded-full mx-auto mb-4 inline-block animate-pulse shadow-lg`}>
+              {timerStatus === 'danger' 
+                ? 'تحذير: المسابقة ستنتهي خلال ساعات قليلة!' 
+                : 'انتبه: المسابقة ستنتهي قريبًا!'}
+            </div>
+          )}
           
           <p className="text-base md:text-lg text-white/90 mb-4 md:mb-6 leading-relaxed">
             انضم إلى مسابقتنا المميزة لزيادة متابعي الموقع! ببساطة، كل ما عليك فعله هو دعوة أصدقائك للانضمام إلى موقعنا باستخدام رابط الإحالة الخاص بك. كلما زاد عدد الأشخاص الذين ينضمون عبر رابطك، زادت فرصتك في الفوز بإحدى الجوائز القيمة!
@@ -515,45 +600,105 @@ export default function ReferralContest() {
             <h2 className="text-xl md:text-2xl font-bold mb-4 text-blue-800 text-right">رابط الإحالة الخاص بك</h2>
             
             <div className="bg-gray-100 rounded-md p-3 md:p-4 flex items-center mb-4">
-                  <input
-                    type="text"
-                    value={userReferralLink}
-                    readOnly
+              <input
+                type="text"
+                value={userReferralLink}
+                readOnly
                 className="flex-grow bg-transparent border-none focus:outline-none text-right truncate" 
-                  />
-                <button
-                  onClick={copyToClipboard}
+              />
+              <button
+                onClick={copyToClipboard}
                 className="ml-3 p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all"
               >
                 {copied ? 'تم النسخ!' : 'نسخ الرابط'}
-                </button>
-              </div>
+              </button>
+            </div>
 
             <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4 text-right">
               <p className="text-blue-700">
                 <span className="font-bold">تلميح:</span> شارك هذا الرابط مع أصدقائك للحصول على نقاط إحالة.
               </p>
               <p className="text-blue-700 mt-1">
-          عندما يقوم صديقك بالنقر على رابط الإحالة الخاص بك، سيتم توجيهه مباشرة إلى الصفحة الرئيسية وتسجيل الإحالة .
+                عندما يقوم صديقك بالنقر على رابط الإحالة الخاص بك، سيتم توجيهه مباشرة إلى الصفحة الرئيسية وتسجيل الإحالة.
               </p>
-                </div>
+            </div>
             
-            <div className="bg-gray-100 rounded-md p-4 text-right">
-              <div className="mb-2 font-semibold text-gray-700">عدد الإحالات الحالي:</div>
-              <div className="text-3xl font-bold text-blue-600">{userReferralCount}</div>
+            <div className="bg-gray-100 rounded-md p-4 mb-4 text-right relative">
+              <div className="flex justify-between items-center">
+                <button 
+                  onClick={handleRefreshReferrals} 
+                  disabled={isUpdatingReferrals}
+                  className={`p-2 rounded-full ${isUpdatingReferrals ? 'bg-gray-300 text-gray-500' : 'bg-blue-100 text-blue-600 hover:bg-blue-200'} transition-colors`}
+                  title="تحديث عدد الإحالات"
+                >
+                  <svg 
+                    className={`w-5 h-5 ${isUpdatingReferrals ? 'animate-spin' : ''}`} 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24" 
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                  </svg>
+                </button>
+                <div>
+                  <div className="mb-2 font-semibold text-gray-700">عدد الإحالات الحالي:</div>
+                  <div className="text-3xl font-bold text-blue-600">{userReferralCount}</div>
+                </div>
               </div>
               
-            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              {/* عرض وقت آخر تحديث */}
+              {lastRefreshTime && (
+                <div className="text-xs text-gray-500 mt-2">
+                  آخر تحديث: {lastRefreshTime.toLocaleTimeString()}
+                </div>
+              )}
+              
+              {/* تقدم مرئي نحو المركز الأول */}
+              <div className="mt-4">
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-blue-600 font-medium">0</span>
+                  <span className="text-blue-600 font-medium">10</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2.5">
+                  <div 
+                    className="bg-blue-600 h-2.5 rounded-full" 
+                    style={{ width: `${Math.min(userReferralCount * 10, 100)}%` }}
+                  ></div>
+                </div>
+                <div className="text-xs text-gray-600 mt-1 text-center">
+                  {userReferralCount >= 10 ? 
+                    'لقد وصلت إلى الحد المطلوب للتأهل للجوائز! واصل جمع المزيد من الإحالات لضمان مكانك في المقدمة!' : 
+                    `تحتاج إلى ${10 - userReferralCount} إحالات إضافية للوصول إلى الحد الأدنى للتأهل`
+                  }
+                </div>
+              </div>
+            </div>
+            
+            {/* تحسين أزرار المشاركة الاجتماعية */}
+            <div className="mb-2 font-semibold text-gray-700 text-right">شارك رابطك الآن:</div>
+            <div className="flex flex-wrap justify-center gap-2">
               {socialPlatforms.map(platform => (
                 <button
                   key={platform.name}
                   onClick={() => shareOnSocialMedia(platform.name)}
-                  className={`px-4 py-2 rounded-full text-white flex items-center ${platform.color} hover:opacity-90 transition-all`}
+                  className={`px-4 py-2 rounded-full text-white flex items-center ${platform.color} hover:opacity-90 transition-all transform hover:scale-105 hover:shadow-md`}
                 >
                   {platform.icon}
                   <span className="ml-2">{platform.text}</span>
                 </button>
               ))}
+            </div>
+            
+            {/* إضافة نصائح لزيادة الإحالات */}
+            <div className="mt-6 p-4 bg-amber-50 rounded-lg text-right">
+              <h3 className="font-bold text-amber-800 mb-2">نصائح لزيادة إحالاتك:</h3>
+              <ul className="text-amber-700 text-sm space-y-2 list-disc list-inside">
+                <li>شارك رابطك في مجموعات اللعبة على واتساب وتيليجرام</li>
+                <li>اطلب من أصدقائك مشاركة الرابط مع أصدقائهم أيضاً</li>
+                <li>استخدم المنتديات ومجموعات اللعبين لنشر رابطك</li>
+                <li>تأكد من شرح المسابقة والجوائز عند مشاركة الرابط</li>
+              </ul>
             </div>
           </div>
         )}
