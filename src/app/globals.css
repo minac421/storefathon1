@@ -1,0 +1,450 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --gold-color: #FFD700;
+  --gold-shadow: rgba(255, 215, 0, 0.5);
+  --gold-light: #FFF3B0;
+  --gold-dark: #B38728;
+  
+  /* نقل المتغيرات من @theme inline إلى :root */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-noto-sans-arabic), Arial, Helvetica, sans-serif;
+}
+
+/* تحسين الخطوط لنماذج الإدخال */
+input, select, textarea, button {
+  font-family: var(--font-noto-sans-arabic), Arial, Helvetica, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+/* تحسينات الخط لصفحة إدارة القلعة */
+.font-noto-sans-arabic {
+  font-family: var(--font-noto-sans-arabic), Arial, Helvetica, sans-serif !important;
+}
+
+/* تعديلات مخصصة للنموذج */
+form label {
+  font-weight: 500;
+}
+
+form input, form select, form textarea {
+  font-size: 1rem;
+  line-height: 1.5;
+  transition: border-color 0.2s ease-in-out;
+}
+
+form input:focus, form select:focus, form textarea:focus {
+  border-color: #3182ce;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.25);
+}
+
+/* إضافة تأثيرات متحركة للدردشة */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out forwards;
+}
+
+/* تنسيق الميزات باللون الذهبي */
+.golden-feature {
+  color: var(--gold-dark);
+  font-weight: 700;
+  text-shadow: 0 0 2px var(--gold-shadow);
+  position: relative;
+  transition: all 0.3s ease;
+  background-image: linear-gradient(to right, var(--gold-dark), var(--gold-color), var(--gold-dark));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: 0.2px;
+  font-size: 0.75rem;
+}
+
+/* تأثير توهج ذهبي عند التحويم */
+.golden-feature:hover {
+  text-shadow: 0 0 5px var(--gold-shadow), 0 0 10px var(--gold-shadow);
+  animation: shimmer 1.5s infinite;
+  transform: scale(1.03);
+}
+
+/* خلفية متدرجة ذهبية للميزات */
+.golden-feature-bg {
+  background: linear-gradient(135deg, #fcf4df, #FFD700, #fcf4df);
+  background-size: 200% auto;
+  animation: goldGradient 8s ease infinite;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid rgba(179, 135, 40, 0.3);
+  box-shadow: 0 0 3px rgba(255, 215, 0, 0.2);
+  transition: all 0.3s ease;
+  margin-bottom: 2px;
+}
+
+.golden-feature-bg:hover {
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+  transform: translateY(-1px);
+}
+
+/* خلفية للميزات في الصفحة الرئيسية */
+.feature-box {
+  background-color: rgba(255, 215, 0, 0.08);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: 6px;
+  padding: 6px;
+  margin-bottom: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-box::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--gold-color), transparent);
+  animation: goldScanline 3s linear infinite;
+}
+
+@keyframes goldScanline {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes goldGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes shimmer {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+
+/* أنيميشن معرض الصور */
+@keyframes scrollX {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes scrollXReverse {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes orbit {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-scroll-x {
+  animation: scrollX 60s linear infinite;
+}
+
+.animate-scroll-x-reverse {
+  animation: scrollXReverse 60s linear infinite;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.8s ease-in-out forwards;
+}
+
+.animate-orbit {
+  animation: orbit 40s linear infinite;
+}
+
+.hover\:pause-animation:hover {
+  animation-play-state: paused;
+}
+
+/* إخفاء شريط التمرير */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* تأثيرات جديدة لمعرض الصور */
+.golden-text {
+  background-image: linear-gradient(to right, var(--gold-dark), var(--gold-color), var(--gold-dark));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  position: relative;
+}
+
+@keyframes shimmerBg {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-shimmer-bg {
+  background-size: 200% auto;
+  animation: shimmerBg 8s linear infinite;
+}
+
+@keyframes scan {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+
+@keyframes scanReverse {
+  0% { transform: translateX(400%); }
+  100% { transform: translateX(-100%); }
+}
+
+.animate-scan {
+  animation: scan 4s ease-in-out infinite;
+}
+
+.animate-scan-reverse {
+  animation: scanReverse 4s ease-in-out infinite;
+}
+
+@keyframes scaleIn {
+  0% { 
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% { 
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.6s ease-out forwards;
+}
+
+@keyframes fadeModal {
+  0% { 
+    opacity: 0;
+  }
+  100% { 
+    opacity: 1;
+  }
+}
+
+.animate-fade-modal {
+  animation: fadeModal 0.3s ease-out forwards;
+}
+
+@keyframes float {
+  0% { 
+    transform: translateY(0) translateX(0);
+  }
+  50% { 
+    transform: translateY(-10px) translateX(10px);
+  }
+  100% { 
+    transform: translateY(0) translateX(0);
+  }
+}
+
+@keyframes floatDelay {
+  0% { 
+    transform: translateY(0) translateX(0);
+  }
+  50% { 
+    transform: translateY(10px) translateX(-10px);
+  }
+  100% { 
+    transform: translateY(0) translateX(0);
+  }
+}
+
+.animate-float {
+  animation: float 8s ease-in-out infinite;
+}
+
+.animate-float-delay {
+  animation: floatDelay 12s ease-in-out infinite;
+}
+
+/* تحديد خصائص الارتفاع القصوى للشاشة */
+.max-h-screen-90 {
+  max-height: 90vh;
+}
+
+.max-h-screen-80 {
+  max-height: 80vh;
+}
+
+/* تحديث أنماط الحركة للمعرض بسرعات مختلفة */
+@keyframes scrollXFast {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes scrollXReverseFast {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes scrollXMedium {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes scrollXReverseMedium {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes scrollXSlow {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-scroll-x-fast {
+  animation: scrollXFast 30s linear infinite;
+}
+
+.animate-scroll-x-reverse-fast {
+  animation: scrollXReverseFast 35s linear infinite;
+}
+
+.animate-scroll-x-medium {
+  animation: scrollXMedium 45s linear infinite;
+}
+
+.animate-scroll-x-reverse-medium {
+  animation: scrollXReverseMedium 50s linear infinite;
+}
+
+.animate-scroll-x-slow {
+  animation: scrollXSlow 55s linear infinite;
+}
+
+/* أنماط حركة إضافية للمعرض */
+@keyframes scrollXReverseSlow {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes scrollXVerySlow {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-scroll-x-reverse-slow {
+  animation: scrollXReverseSlow 60s linear infinite;
+}
+
+.animate-scroll-x-very-slow {
+  animation: scrollXVerySlow 65s linear infinite;
+}
+
+/* تحسين الأزرار الانتقالية بين الصفحات */
+.hover\:z-10:hover {
+  z-index: 10;
+}
+
+/* تأثيرات للنافذة المنبثقة للصور */
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-zoom-in {
+  animation: zoomIn 0.3s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}

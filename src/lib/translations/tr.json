@@ -1,0 +1,167 @@
+{
+  "common": {
+    "siteName": "Fatihler: Altın Çağ",
+    "slogan": "Altın Çağınızı Kontrol Edin",
+    "orderNow": "Şimdi Sipariş Ver",
+    "learnMore": "Daha Fazla Bilgi",
+    "contactUs": "Bize Ulaşın"
+  },
+  "header": {
+    "home": "Ana Sayfa",
+    "services": "Hizmetler",
+    "castles": "Kaleler",
+    "bots": "Botlar",
+    "events": "Etkinlikler",
+    "distributor": "Dağıtıcı Ol",
+    "customOrder": "Özel Sipariş",
+    "support": "Destek"
+  },
+  "footer": {
+    "copyright": "© {year} Fatihler: Altın Çağ - Tüm Hakları Saklıdır",
+    "privacyPolicy": "Gizlilik Politikası",
+    "termsOfService": "Kullanım Şartları",
+    "aboutUs": "Hakkımızda",
+    "followUs": "Bizi Takip Edin"
+  },
+  "home": {
+    "heroBanner": {
+      "title": "Fatihler Dünyasında Gücü Ele Geçirin",
+      "subtitle": "Oyun deneyiminizi yükseltmek için kapsamlı hizmetler",
+      "cta": "Hizmetlerimizi Keşfedin"
+    },
+    "stats": {
+      "orders": "Tamamlanan Sipariş",
+      "distributors": "Onaylı Dağıtıcı",
+      "satisfaction": "Müşteri Memnuniyeti"
+    },
+    "testimonials": {
+      "title": "Oyuncu Yorumları",
+      "subtitle": "Müşterilerimizin hizmetlerimiz hakkında söyledikleri"
+    },
+    "featured": {
+      "title": "Öne Çıkan Hizmetler",
+      "subtitle": "Oyununuzu geliştirmek için en iyi hizmetlerimizden seçin"
+    }
+  },
+  "services": {
+    "title": "Hizmetlerimiz",
+    "subtitle": "Fatihler dünyasında başarılı olmak için ihtiyacınız olan her şey",
+    "resources": {
+      "title": "Kaynaklar",
+      "description": "Rekabetçi fiyatlarla toplu miktarlarda temel oyun kaynakları edinin",
+      "items": {
+        "wheat": "Buğday",
+        "wood": "Odun",
+        "iron": "Demir",
+        "silver": "Gümüş",
+        "gold": "Altın"
+      }
+    },
+    "militarySupport": {
+      "title": "Askeri Destek ve Güçlendirme",
+      "description": "Ordunuzu güçlendirmek ve askeri yeteneklerinizi geliştirmek için özel hizmetler",
+      "items": {
+        "armyBoost": "Ordu Gücü Artırma",
+        "buildingDevelopment": "Bina Geliştirme",
+        "battleSupport": "Savaş Desteği"
+      }
+    },
+    "logistics": {
+      "title": "Çiftlikler ve Lojistik Destek",
+      "description": "Kaynak toplama süreçlerini otomatikleştirin ve tedarikleri verimli bir şekilde yönetin",
+      "items": {
+        "autoCollect": "Otomatik Kaynak Toplama",
+        "supplyLines": "Tedarik Hattı Yönetimi"
+      }
+    },
+    "accounts": {
+      "title": "Hazır Hesaplar",
+      "description": "Çeşitli seviyelerde anında kullanıma hazır gelişmiş hesaplar",
+      "items": {
+        "standardAccounts": "Farklı Seviyelerde Hesaplar",
+        "vipAccounts": "VIP Hesaplar"
+      }
+    },
+    "vipServices": {
+      "title": "VIP Hizmetler",
+      "description": "7/24 kişisel destekle seçkin oyuncular için özel hizmetler",
+      "items": {
+        "personalSupport": "Kişisel Destek",
+        "priorityExecution": "Öncelikli Uygulama",
+        "strategicAnalysis": "Stratejik Analiz"
+      }
+    }
+  },
+  "castles": {
+    "title": "Video Kaleler",
+    "subtitle": "En iyi kalelere göz atın ve özel versiyonunuzu sipariş edin",
+    "filters": {
+      "power": "Güç",
+      "type": "Tür",
+      "price": "Fiyat"
+    },
+    "orderSimilar": "Benzer Kale Sipariş Et"
+  },
+  "bots": {
+    "title": "Oyun Botları",
+    "subtitle": "Günlük görevlerinizi otomatikleştirin ve oyun verimliliğinizi artırın",
+    "features": {
+      "resourceCollection": "Kaynak Toplama",
+      "building": "İnşa ve Geliştirme",
+      "warfare": "Savaş Yönetimi"
+    },
+    "buyNow": "Şimdi Satın Al",
+    "downloadNow": "Şimdi İndir"
+  },
+  "events": {
+    "title": "Yaklaşan Etkinlikler",
+    "subtitle": "Özel etkinliklere katılın ve değerli ödüller kazanın",
+    "register": "Şimdi Kaydol",
+    "eventDetails": {
+      "startDate": "Başlangıç Tarihi",
+      "endDate": "Bitiş Tarihi",
+      "requirements": "Gereksinimler",
+      "rewards": "Ödüller"
+    }
+  },
+  "distributor": {
+    "title": "Dağıtıcı Olarak Katılın",
+    "subtitle": "Ekibimizin bir parçası olun ve komisyon kazanın",
+    "form": {
+      "name": "İsim",
+      "contact": "İletişim Bilgileri",
+      "serviceTypes": "Hizmet Türleri",
+      "experience": "Deneyim",
+      "submit": "Başvuru Gönder"
+    }
+  },
+  "customOrder": {
+    "title": "Özel Sipariş",
+    "subtitle": "İhtiyaçlarınıza göre özelleştirilmiş bir hizmet talep edin",
+    "form": {
+      "orderType": "Sipariş Türü",
+      "quantity": "Miktar",
+      "notes": "Ek Notlar",
+      "paymentMethod": "Ödeme Yöntemi",
+      "contactMethod": "İletişim Yöntemi",
+      "submit": "Siparişi Gönder"
+    }
+  },
+  "support": {
+    "title": "Destek ve İletişim",
+    "subtitle": "Sorularınızı yanıtlamak için buradayız",
+    "contactMethods": {
+      "liveChat": "Canlı Sohbet",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram",
+      "email": "E-posta"
+    },
+    "form": {
+      "name": "İsim",
+      "email": "E-posta",
+      "subject": "Konu",
+      "message": "Mesaj",
+      "submit": "Gönder"
+    }
+  }
+}

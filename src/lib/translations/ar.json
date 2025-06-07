@@ -1,0 +1,167 @@
+{
+  "common": {
+    "siteName": "الفاتحون: العصر الذهبي",
+    "slogan": "تحكم في عصرك الذهبي",
+    "orderNow": "اطلب الآن",
+    "learnMore": "اعرف المزيد",
+    "contactUs": "تواصل معنا"
+  },
+  "header": {
+    "home": "الرئيسية",
+    "services": "الخدمات",
+    "castles": "القلاع",
+    "bots": "البوتات",
+    "events": "الأحداث",
+    "distributor": "كن موزعًا",
+    "customOrder": "طلب مخصص",
+    "support": "الدعم"
+  },
+  "footer": {
+    "copyright": "© {year} الفاتحون: العصر الذهبي - جميع الحقوق محفوظة",
+    "privacyPolicy": "سياسة الخصوصية",
+    "termsOfService": "شروط الخدمة",
+    "aboutUs": "من نحن",
+    "followUs": "تابعنا"
+  },
+  "home": {
+    "heroBanner": {
+      "title": "امتلك القوة في عالم الفاتحون",
+      "subtitle": "خدمات متكاملة للارتقاء بتجربتك في اللعبة",
+      "cta": "استكشف خدماتنا"
+    },
+    "stats": {
+      "orders": "طلب تم تنفيذه",
+      "distributors": "موزع معتمد",
+      "satisfaction": "رضا العملاء"
+    },
+    "testimonials": {
+      "title": "آراء اللاعبين",
+      "subtitle": "ماذا يقول عملاؤنا عن خدماتنا"
+    },
+    "featured": {
+      "title": "خدماتنا المميزة",
+      "subtitle": "اختر من بين أفضل الخدمات لتطوير لعبتك"
+    }
+  },
+  "services": {
+    "title": "خدماتنا",
+    "subtitle": "كل ما تحتاجه للتفوق في عالم الفاتحون",
+    "resources": {
+      "title": "الموارد",
+      "description": "احصل على الموارد الأساسية للعبة بكميات كبيرة وبأسعار منافسة",
+      "items": {
+        "wheat": "قمح",
+        "wood": "خشب",
+        "iron": "حديد",
+        "silver": "فضة",
+        "gold": "ذهب"
+      }
+    },
+    "militarySupport": {
+      "title": "الدعم الحربي والتقوية",
+      "description": "خدمات متخصصة لتقوية جيشك وتطوير قدراتك الحربية",
+      "items": {
+        "armyBoost": "رفع قوة الجيش",
+        "buildingDevelopment": "تطوير المباني",
+        "battleSupport": "مساندة حربية"
+      }
+    },
+    "logistics": {
+      "title": "المزارع والدعم اللوجستي",
+      "description": "أتمتة عمليات جمع الموارد وإدارة الإمدادات بكفاءة",
+      "items": {
+        "autoCollect": "جمع تلقائي للموارد",
+        "supplyLines": "إدارة سكك الإمداد"
+      }
+    },
+    "accounts": {
+      "title": "شراء الحسابات الجاهزة",
+      "description": "حسابات متطورة جاهزة للاستخدام الفوري بمختلف المستويات",
+      "items": {
+        "standardAccounts": "حسابات بمستويات مختلفة",
+        "vipAccounts": "حسابات VIP"
+      }
+    },
+    "vipServices": {
+      "title": "خدمات مميزة (VIP)",
+      "description": "خدمات حصرية للاعبين المتميزين مع دعم شخصي على مدار الساعة",
+      "items": {
+        "personalSupport": "دعم شخصي",
+        "priorityExecution": "أولوية تنفيذ",
+        "strategicAnalysis": "تحليلات استراتيجية"
+      }
+    }
+  },
+  "castles": {
+    "title": "القلاع بالفيديو",
+    "subtitle": "استعرض أفضل القلاع واطلب نسختك المخصصة",
+    "filters": {
+      "power": "القوة",
+      "type": "النوع",
+      "price": "السعر"
+    },
+    "orderSimilar": "اطلب قلعة مثل هذه"
+  },
+  "bots": {
+    "title": "بوتات اللعبة",
+    "subtitle": "أتمتة مهامك اليومية وزيادة كفاءة لعبك",
+    "features": {
+      "resourceCollection": "جمع الموارد",
+      "building": "البناء والتطوير",
+      "warfare": "إدارة الحروب"
+    },
+    "buyNow": "اشترِ الآن",
+    "downloadNow": "حمل الآن"
+  },
+  "events": {
+    "title": "الأحداث القادمة",
+    "subtitle": "انضم إلى أحداث حصرية واحصل على مكافآت قيمة",
+    "register": "سجل الآن",
+    "eventDetails": {
+      "startDate": "تاريخ البدء",
+      "endDate": "تاريخ الانتهاء",
+      "requirements": "المتطلبات",
+      "rewards": "المكافآت"
+    }
+  },
+  "distributor": {
+    "title": "انضم كموزع",
+    "subtitle": "كن جزءًا من فريقنا واكسب العمولات",
+    "form": {
+      "name": "الاسم",
+      "contact": "معلومات التواصل",
+      "serviceTypes": "أنواع الخدمات",
+      "experience": "الخبرة",
+      "submit": "إرسال الطلب"
+    }
+  },
+  "customOrder": {
+    "title": "طلب مخصص",
+    "subtitle": "اطلب خدمة مخصصة حسب احتياجاتك",
+    "form": {
+      "orderType": "نوع الطلب",
+      "quantity": "الكمية",
+      "notes": "ملاحظات إضافية",
+      "paymentMethod": "طريقة الدفع",
+      "contactMethod": "طريقة التواصل",
+      "submit": "إرسال الطلب"
+    }
+  },
+  "support": {
+    "title": "الدعم والتواصل",
+    "subtitle": "نحن هنا للإجابة على استفساراتك",
+    "contactMethods": {
+      "liveChat": "الدردشة الفورية",
+      "whatsapp": "واتساب",
+      "telegram": "تليجرام",
+      "email": "البريد الإلكتروني"
+    },
+    "form": {
+      "name": "الاسم",
+      "email": "البريد الإلكتروني",
+      "subject": "الموضوع",
+      "message": "الرسالة",
+      "submit": "إرسال"
+    }
+  }
+}

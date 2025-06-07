@@ -1,0 +1,167 @@
+{
+  "common": {
+    "siteName": "The Conquerors: Golden Age",
+    "slogan": "Control Your Golden Age",
+    "orderNow": "Order Now",
+    "learnMore": "Learn More",
+    "contactUs": "Contact Us"
+  },
+  "header": {
+    "home": "Home",
+    "services": "Services",
+    "castles": "Castles",
+    "bots": "Bots",
+    "events": "Events",
+    "distributor": "Become Distributor",
+    "customOrder": "Custom Order",
+    "support": "Support"
+  },
+  "footer": {
+    "copyright": "© {year} The Conquerors: Golden Age - All Rights Reserved",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "aboutUs": "About Us",
+    "followUs": "Follow Us"
+  },
+  "home": {
+    "heroBanner": {
+      "title": "Own the Power in The Conquerors World",
+      "subtitle": "Comprehensive services to elevate your gaming experience",
+      "cta": "Explore Our Services"
+    },
+    "stats": {
+      "orders": "Orders Completed",
+      "distributors": "Certified Distributors",
+      "satisfaction": "Customer Satisfaction"
+    },
+    "testimonials": {
+      "title": "Player Reviews",
+      "subtitle": "What our customers say about our services"
+    },
+    "featured": {
+      "title": "Featured Services",
+      "subtitle": "Choose from our best services to enhance your game"
+    }
+  },
+  "services": {
+    "title": "Our Services",
+    "subtitle": "Everything you need to excel in The Conquerors world",
+    "resources": {
+      "title": "Resources",
+      "description": "Get essential game resources in bulk quantities at competitive prices",
+      "items": {
+        "wheat": "Wheat",
+        "wood": "Wood",
+        "iron": "Iron",
+        "silver": "Silver",
+        "gold": "Gold"
+      }
+    },
+    "militarySupport": {
+      "title": "Military Support & Enhancement",
+      "description": "Specialized services to strengthen your army and develop your military capabilities",
+      "items": {
+        "armyBoost": "Army Strength Boost",
+        "buildingDevelopment": "Building Development",
+        "battleSupport": "Battle Support"
+      }
+    },
+    "logistics": {
+      "title": "Farms & Logistical Support",
+      "description": "Automate resource collection processes and efficiently manage supplies",
+      "items": {
+        "autoCollect": "Automatic Resource Collection",
+        "supplyLines": "Supply Line Management"
+      }
+    },
+    "accounts": {
+      "title": "Ready-Made Accounts",
+      "description": "Advanced accounts ready for immediate use at various levels",
+      "items": {
+        "standardAccounts": "Accounts at Different Levels",
+        "vipAccounts": "VIP Accounts"
+      }
+    },
+    "vipServices": {
+      "title": "VIP Services",
+      "description": "Exclusive services for distinguished players with 24/7 personal support",
+      "items": {
+        "personalSupport": "Personal Support",
+        "priorityExecution": "Priority Execution",
+        "strategicAnalysis": "Strategic Analysis"
+      }
+    }
+  },
+  "castles": {
+    "title": "Video Castles",
+    "subtitle": "Browse the best castles and order your custom version",
+    "filters": {
+      "power": "Power",
+      "type": "Type",
+      "price": "Price"
+    },
+    "orderSimilar": "Order Similar Castle"
+  },
+  "bots": {
+    "title": "Game Bots",
+    "subtitle": "Automate your daily tasks and increase your playing efficiency",
+    "features": {
+      "resourceCollection": "Resource Collection",
+      "building": "Building & Development",
+      "warfare": "Warfare Management"
+    },
+    "buyNow": "Buy Now",
+    "downloadNow": "Download Now"
+  },
+  "events": {
+    "title": "Upcoming Events",
+    "subtitle": "Join exclusive events and get valuable rewards",
+    "register": "Register Now",
+    "eventDetails": {
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "requirements": "Requirements",
+      "rewards": "Rewards"
+    }
+  },
+  "distributor": {
+    "title": "Join as Distributor",
+    "subtitle": "Be part of our team and earn commissions",
+    "form": {
+      "name": "Name",
+      "contact": "Contact Information",
+      "serviceTypes": "Service Types",
+      "experience": "Experience",
+      "submit": "Submit Application"
+    }
+  },
+  "customOrder": {
+    "title": "Custom Order",
+    "subtitle": "Request a customized service based on your needs",
+    "form": {
+      "orderType": "Order Type",
+      "quantity": "Quantity",
+      "notes": "Additional Notes",
+      "paymentMethod": "Payment Method",
+      "contactMethod": "Contact Method",
+      "submit": "Submit Order"
+    }
+  },
+  "support": {
+    "title": "Support & Contact",
+    "subtitle": "We're here to answer your inquiries",
+    "contactMethods": {
+      "liveChat": "Live Chat",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram",
+      "email": "Email"
+    },
+    "form": {
+      "name": "Name",
+      "email": "Email",
+      "subject": "Subject",
+      "message": "Message",
+      "submit": "Send"
+    }
+  }
+}

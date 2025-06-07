@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .logo-text { font-family: Arial, sans-serif; font-weight: bold; }
+    .s-letter { fill: url(#s-gradient); }
+    .main-text { fill: url(#text-gradient); }
+  </style>
+  
+  <defs>
+    <linearGradient id="s-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a0c8ff" />
+      <stop offset="100%" stop-color="#6a9eff" />
+    </linearGradient>
+    <linearGradient id="text-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d4e1f4" />
+      <stop offset="100%" stop-color="#a0c8ff" />
+    </linearGradient>
+  </defs>
+  
+  <!-- S letter with glow effect -->
+  <g transform="translate(250, 180) scale(1.2)">
+    <path class="s-letter" d="M0,-80 C-40,-80 -60,-60 -60,-30 C-60,0 -40,20 0,30 C40,40 60,60 60,90 C60,120 40,140 0,140 C-40,140 -60,120 -60,90 M0,-80 C40,-80 60,-60 60,-30 C60,0 40,20 0,30 C-40,40 -60,60 -60,90 C-60,120 -40,140 0,140" 
+        stroke="white" stroke-width="8" filter="url(#glow)" />
+    
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="10" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </g>
+  
+  <!-- STORE FATHON text -->
+  <g transform="translate(70, 350)">
+    <text class="logo-text main-text" font-size="45">STORE</text>
+  </g>
+  <g transform="translate(70, 400)">
+    <text class="logo-text main-text" font-size="45">FATHON</text>
+  </g>
+</svg> 

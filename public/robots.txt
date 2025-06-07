@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://conquerors-website.netlify.app/sitemap.xml
