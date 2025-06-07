@@ -1,0 +1,10 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  MONGODB_URI = "mongodb+srv://minaadelc4:cHjkStQnKuh91sNt@storefathone.a42qbk5.mongodb.net/storefathon?retryWrites=true&w=majority&appName=storefathone"
+  NEXT_PUBLIC_SITE_URL = "https://conquerors-website.netlify.app"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
